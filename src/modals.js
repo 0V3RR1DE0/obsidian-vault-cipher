@@ -4,7 +4,6 @@
  */
 
 import { Modal, Notice } from "obsidian";
-import { UnlockModal } from "./modals.js"; // (kept for reference in file header; actual classes below)
 
 /**
  * Note: This file defines SetupModal, UnlockModal, ConfirmModal.
