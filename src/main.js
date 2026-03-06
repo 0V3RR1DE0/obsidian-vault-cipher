@@ -145,7 +145,8 @@ export default class VaultCipherPlugin extends Plugin {
 
     if (!keyBlobExists) {
       // First launch — no key blob yet, run setup wizard
-      new SetupModal(this.app, async (password) => {
+      // Pass plugin instance so SetupModal can switch to unlock flow if a key appears
+      new SetupModal(this.app, this, async (password) => {
         await this.setupEncryption(password);
       }).open();
     } else {

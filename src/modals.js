@@ -4,16 +4,28 @@
  */
 
 import { Modal, Notice } from "obsidian";
+import { UnlockModal } from "./modals.js"; // (kept for reference in file header; actual classes below)
+
+/**
+ * Note: This file defines SetupModal, UnlockModal, ConfirmModal.
+ * SetupModal now accepts the plugin instance so it can check for a
+ * pre-synced .vault-key and switch to unlock flow when appropriate.
+ */
 
 // ── Setup Modal (first launch) ─────────────────────────────────────────────────
 
 /**
  * Shown once on first launch. Walks the user through choosing a password
  * and explains exactly how the encryption works.
+ *
+ * Constructor: new SetupModal(app, plugin, onSubmit)
+ * - plugin is the VaultCipherPlugin instance (used to call keyBlobExists/unlock)
+ * - onSubmit(password) is called to create and persist the key blob
  */
 export class SetupModal extends Modal {
-  constructor(app, onSubmit) {
+  constructor(app, plugin, onSubmit) {
     super(app);
+    this.plugin   = plugin;
     this.onSubmit = onSubmit;
     this.password = "";
     this.confirm  = "";
@@ -21,8 +33,25 @@ export class SetupModal extends Modal {
     this.modalEl.addEventListener("click", (e) => e.stopPropagation());
   }
 
-  onOpen() {
+  // onOpen can be async so we can check for a pre-existing key blob
+  async onOpen() {
     const { contentEl } = this;
+
+    // If a .vault-key is already present (e.g. sync landed before we opened),
+    // close setup and show the unlock modal instead.
+    try {
+      if (await this.plugin.keyBlobExists()) {
+        this.close();
+        new UnlockModal(this.app, async (password) => {
+          return await this.plugin.unlockWithPassword(password);
+        }).open();
+        return;
+      }
+    } catch (e) {
+      // Non-fatal: fall through to normal setup UI if the check fails
+      console.error("Vault Cipher: keyBlobExists check failed:", e);
+    }
+
     contentEl.empty();
     contentEl.addClass("vault-cipher-modal");
 
@@ -140,6 +169,18 @@ export class SetupModal extends Modal {
       new Notice("Vault Cipher: setup cancelled. The plugin will not encrypt notes until set up.");
     });
 
+    // New: quick path for users who already synced a key
+    const altBtn = buttonRow.createEl("button", {
+      text: "I already have a key — Unlock",
+      cls: "btn-secondary",
+    });
+    altBtn.addEventListener("click", () => {
+      this.close();
+      new UnlockModal(this.app, async (password) => {
+        return await this.plugin.unlockWithPassword(password);
+      }).open();
+    });
+
     const setupBtn = buttonRow.createEl("button", {
       text: "Set up encryption",
       cls: "btn-primary",
@@ -150,7 +191,23 @@ export class SetupModal extends Modal {
     setTimeout(() => pwInput.focus(), 50);
   }
 
+  // submit should also re-check for a key existing (race may have completed)
   async submit(pwInput, cfInput, btn) {
+    // If a key landed while the user was typing, switch to unlock flow.
+    try {
+      if (await this.plugin.keyBlobExists()) {
+        new Notice("A vault key was detected — please unlock with your password.");
+        this.close();
+        new UnlockModal(this.app, async (password) => {
+          return await this.plugin.unlockWithPassword(password);
+        }).open();
+        return;
+      }
+    } catch (e) {
+      console.error("Vault Cipher: keyBlobExists check failed at submit:", e);
+      // continue with setup if check failed
+    }
+
     if (!this.password) {
       pwInput.focus();
       return;
@@ -228,7 +285,7 @@ export class UnlockModal extends Modal {
       if (e.key === "Enter") this.submit(pwInput, unlockBtn);
     });
 
-    // ── Buttons ──────────────────────────────────────────────────────────────
+    // ── Buttons ─────────────────────────────────────────────────────────────
     contentEl.createEl("hr", { cls: "vault-cipher-divider" });
     const buttonRow = contentEl.createDiv({ cls: "vault-cipher-button-row" });
 
