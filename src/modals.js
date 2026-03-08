@@ -123,7 +123,7 @@ export class SetupModal extends Modal {
     const steps = how.createEl("ol");
     [
       "A random 256-bit vault key is generated for this vault.",
-      "Your password is hashed with Argon2id (128 MB, 3 iterations) producing a wrapping key.",
+      "Your password is hashed with Argon2id (64 MB, 3 iterations) producing a wrapping key.",
       "The wrapping key encrypts the vault key with ChaCha20-Poly1305 — stored as .vault-key.",
       "Every note is encrypted with the vault key + a unique random nonce on each save.",
       "On unlock, your password unwraps the vault key into memory. Notes decrypt transparently.",
@@ -461,7 +461,11 @@ export class ImportKeyModal extends Modal {
     const importBtn = buttonRow.createEl("button", { text: "Import", cls: "btn-primary mod-warning" });
     importBtn.addEventListener("click", async () => {
       if (!this.text) { new Notice("Paste the .vault-key JSON first."); return; }
-      try { JSON.parse(this.text); } catch { new Notice("Invalid JSON."); return; }
+      let parsed;
+      try { parsed = JSON.parse(this.text); } catch { new Notice("Invalid JSON — paste the full .vault-key contents."); return; }
+      if (parsed.v !== 4)  { new Notice(`❌ Key blob version ${parsed.v ?? "unknown"} is not supported by this plugin version.`); return; }
+      if (!parsed.salt)    { new Notice("❌ Key blob is missing the salt field."); return; }
+      if (!parsed.encryptedKey) { new Notice("❌ Key blob is missing the encryptedKey field."); return; }
 
       this.close();
       new ConfirmModal(this.app, {
