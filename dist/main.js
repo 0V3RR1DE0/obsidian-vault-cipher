@@ -1,13 +1,8 @@
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -20,929 +15,11 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => {
   __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
   return value;
 };
-
-// node_modules/argon2-browser/dist/argon2.js
-var require_argon2 = __commonJS({
-  "node_modules/argon2-browser/dist/argon2.js"(exports, module2) {
-    var Module2 = typeof self !== "undefined" && typeof self.Module !== "undefined" ? self.Module : {};
-    var jsModule = Module2;
-    var moduleOverrides = {};
-    var key;
-    for (key in Module2) {
-      if (Module2.hasOwnProperty(key)) {
-        moduleOverrides[key] = Module2[key];
-      }
-    }
-    var arguments_ = [];
-    var thisProgram = "./this.program";
-    var quit_ = function(status, toThrow) {
-      throw toThrow;
-    };
-    var ENVIRONMENT_IS_WEB = false;
-    var ENVIRONMENT_IS_WORKER = false;
-    var ENVIRONMENT_IS_NODE = false;
-    var ENVIRONMENT_IS_SHELL = false;
-    ENVIRONMENT_IS_WEB = typeof window === "object";
-    ENVIRONMENT_IS_WORKER = typeof importScripts === "function";
-    ENVIRONMENT_IS_NODE = typeof process === "object" && typeof process.versions === "object" && typeof process.versions.node === "string";
-    ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
-    var scriptDirectory = "";
-    function locateFile(path) {
-      if (Module2["locateFile"]) {
-        return Module2["locateFile"](path, scriptDirectory);
-      }
-      return scriptDirectory + path;
-    }
-    var read_;
-    var readAsync;
-    var readBinary;
-    var setWindowTitle;
-    var nodeFS;
-    var nodePath;
-    if (ENVIRONMENT_IS_NODE) {
-      if (ENVIRONMENT_IS_WORKER) {
-        scriptDirectory = require("path").dirname(scriptDirectory) + "/";
-      } else {
-        scriptDirectory = __dirname + "/";
-      }
-      read_ = function shell_read(filename, binary) {
-        if (!nodeFS)
-          nodeFS = require("fs");
-        if (!nodePath)
-          nodePath = require("path");
-        filename = nodePath["normalize"](filename);
-        return nodeFS["readFileSync"](filename, binary ? null : "utf8");
-      };
-      readBinary = function readBinary2(filename) {
-        var ret = read_(filename, true);
-        if (!ret.buffer) {
-          ret = new Uint8Array(ret);
-        }
-        assert(ret.buffer);
-        return ret;
-      };
-      if (process["argv"].length > 1) {
-        thisProgram = process["argv"][1].replace(/\\/g, "/");
-      }
-      arguments_ = process["argv"].slice(2);
-      if (typeof module2 !== "undefined") {
-        module2["exports"] = Module2;
-      }
-      process["on"]("uncaughtException", function(ex) {
-        if (!(ex instanceof ExitStatus)) {
-          throw ex;
-        }
-      });
-      process["on"]("unhandledRejection", abort);
-      quit_ = function(status) {
-        process["exit"](status);
-      };
-      Module2["inspect"] = function() {
-        return "[Emscripten Module object]";
-      };
-    } else if (ENVIRONMENT_IS_SHELL) {
-      if (typeof read != "undefined") {
-        read_ = function shell_read(f) {
-          return read(f);
-        };
-      }
-      readBinary = function readBinary2(f) {
-        var data;
-        if (typeof readbuffer === "function") {
-          return new Uint8Array(readbuffer(f));
-        }
-        data = read(f, "binary");
-        assert(typeof data === "object");
-        return data;
-      };
-      if (typeof scriptArgs != "undefined") {
-        arguments_ = scriptArgs;
-      } else if (typeof arguments != "undefined") {
-        arguments_ = arguments;
-      }
-      if (typeof quit === "function") {
-        quit_ = function(status) {
-          quit(status);
-        };
-      }
-      if (typeof print !== "undefined") {
-        if (typeof console === "undefined")
-          console = {};
-        console.log = print;
-        console.warn = console.error = typeof printErr !== "undefined" ? printErr : print;
-      }
-    } else if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
-      if (ENVIRONMENT_IS_WORKER) {
-        scriptDirectory = self.location.href;
-      } else if (typeof document !== "undefined" && document.currentScript) {
-        scriptDirectory = document.currentScript.src;
-      }
-      if (scriptDirectory.indexOf("blob:") !== 0) {
-        scriptDirectory = scriptDirectory.substr(0, scriptDirectory.lastIndexOf("/") + 1);
-      } else {
-        scriptDirectory = "";
-      }
-      {
-        read_ = function(url) {
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", url, false);
-          xhr.send(null);
-          return xhr.responseText;
-        };
-        if (ENVIRONMENT_IS_WORKER) {
-          readBinary = function(url) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", url, false);
-            xhr.responseType = "arraybuffer";
-            xhr.send(null);
-            return new Uint8Array(xhr.response);
-          };
-        }
-        readAsync = function(url, onload, onerror) {
-          var xhr = new XMLHttpRequest();
-          xhr.open("GET", url, true);
-          xhr.responseType = "arraybuffer";
-          xhr.onload = function() {
-            if (xhr.status == 200 || xhr.status == 0 && xhr.response) {
-              onload(xhr.response);
-              return;
-            }
-            onerror();
-          };
-          xhr.onerror = onerror;
-          xhr.send(null);
-        };
-      }
-      setWindowTitle = function(title) {
-        document.title = title;
-      };
-    } else {
-    }
-    var out = Module2["print"] || console.log.bind(console);
-    var err = Module2["printErr"] || console.warn.bind(console);
-    for (key in moduleOverrides) {
-      if (moduleOverrides.hasOwnProperty(key)) {
-        Module2[key] = moduleOverrides[key];
-      }
-    }
-    moduleOverrides = null;
-    if (Module2["arguments"])
-      arguments_ = Module2["arguments"];
-    if (Module2["thisProgram"])
-      thisProgram = Module2["thisProgram"];
-    if (Module2["quit"])
-      quit_ = Module2["quit"];
-    var wasmBinary;
-    if (Module2["wasmBinary"])
-      wasmBinary = Module2["wasmBinary"];
-    var noExitRuntime = Module2["noExitRuntime"] || true;
-    if (typeof WebAssembly !== "object") {
-      abort("no native wasm support detected");
-    }
-    var wasmMemory;
-    var ABORT = false;
-    var EXITSTATUS;
-    function assert(condition, text) {
-      if (!condition) {
-        abort("Assertion failed: " + text);
-      }
-    }
-    var ALLOC_NORMAL = 0;
-    var ALLOC_STACK = 1;
-    function allocate(slab, allocator) {
-      var ret;
-      if (allocator == ALLOC_STACK) {
-        ret = stackAlloc(slab.length);
-      } else {
-        ret = _malloc(slab.length);
-      }
-      if (slab.subarray || slab.slice) {
-        HEAPU8.set(slab, ret);
-      } else {
-        HEAPU8.set(new Uint8Array(slab), ret);
-      }
-      return ret;
-    }
-    var UTF8Decoder = typeof TextDecoder !== "undefined" ? new TextDecoder("utf8") : void 0;
-    function UTF8ArrayToString(heap, idx, maxBytesToRead) {
-      var endIdx = idx + maxBytesToRead;
-      var endPtr = idx;
-      while (heap[endPtr] && !(endPtr >= endIdx))
-        ++endPtr;
-      if (endPtr - idx > 16 && heap.subarray && UTF8Decoder) {
-        return UTF8Decoder.decode(heap.subarray(idx, endPtr));
-      } else {
-        var str = "";
-        while (idx < endPtr) {
-          var u0 = heap[idx++];
-          if (!(u0 & 128)) {
-            str += String.fromCharCode(u0);
-            continue;
-          }
-          var u1 = heap[idx++] & 63;
-          if ((u0 & 224) == 192) {
-            str += String.fromCharCode((u0 & 31) << 6 | u1);
-            continue;
-          }
-          var u2 = heap[idx++] & 63;
-          if ((u0 & 240) == 224) {
-            u0 = (u0 & 15) << 12 | u1 << 6 | u2;
-          } else {
-            u0 = (u0 & 7) << 18 | u1 << 12 | u2 << 6 | heap[idx++] & 63;
-          }
-          if (u0 < 65536) {
-            str += String.fromCharCode(u0);
-          } else {
-            var ch = u0 - 65536;
-            str += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
-          }
-        }
-      }
-      return str;
-    }
-    function UTF8ToString(ptr, maxBytesToRead) {
-      return ptr ? UTF8ArrayToString(HEAPU8, ptr, maxBytesToRead) : "";
-    }
-    function alignUp(x, multiple) {
-      if (x % multiple > 0) {
-        x += multiple - x % multiple;
-      }
-      return x;
-    }
-    var buffer;
-    var HEAP8;
-    var HEAPU8;
-    var HEAP16;
-    var HEAPU16;
-    var HEAP32;
-    var HEAPU32;
-    var HEAPF32;
-    var HEAPF64;
-    function updateGlobalBufferAndViews(buf) {
-      buffer = buf;
-      Module2["HEAP8"] = HEAP8 = new Int8Array(buf);
-      Module2["HEAP16"] = HEAP16 = new Int16Array(buf);
-      Module2["HEAP32"] = HEAP32 = new Int32Array(buf);
-      Module2["HEAPU8"] = HEAPU8 = new Uint8Array(buf);
-      Module2["HEAPU16"] = HEAPU16 = new Uint16Array(buf);
-      Module2["HEAPU32"] = HEAPU32 = new Uint32Array(buf);
-      Module2["HEAPF32"] = HEAPF32 = new Float32Array(buf);
-      Module2["HEAPF64"] = HEAPF64 = new Float64Array(buf);
-    }
-    var INITIAL_MEMORY = Module2["INITIAL_MEMORY"] || 16777216;
-    var wasmTable;
-    var __ATPRERUN__ = [];
-    var __ATINIT__ = [];
-    var __ATPOSTRUN__ = [];
-    var runtimeInitialized = false;
-    function preRun() {
-      if (Module2["preRun"]) {
-        if (typeof Module2["preRun"] == "function")
-          Module2["preRun"] = [Module2["preRun"]];
-        while (Module2["preRun"].length) {
-          addOnPreRun(Module2["preRun"].shift());
-        }
-      }
-      callRuntimeCallbacks(__ATPRERUN__);
-    }
-    function initRuntime() {
-      runtimeInitialized = true;
-      callRuntimeCallbacks(__ATINIT__);
-    }
-    function postRun() {
-      if (Module2["postRun"]) {
-        if (typeof Module2["postRun"] == "function")
-          Module2["postRun"] = [Module2["postRun"]];
-        while (Module2["postRun"].length) {
-          addOnPostRun(Module2["postRun"].shift());
-        }
-      }
-      callRuntimeCallbacks(__ATPOSTRUN__);
-    }
-    function addOnPreRun(cb) {
-      __ATPRERUN__.unshift(cb);
-    }
-    function addOnInit(cb) {
-      __ATINIT__.unshift(cb);
-    }
-    function addOnPostRun(cb) {
-      __ATPOSTRUN__.unshift(cb);
-    }
-    var runDependencies = 0;
-    var runDependencyWatcher = null;
-    var dependenciesFulfilled = null;
-    function addRunDependency(id) {
-      runDependencies++;
-      if (Module2["monitorRunDependencies"]) {
-        Module2["monitorRunDependencies"](runDependencies);
-      }
-    }
-    function removeRunDependency(id) {
-      runDependencies--;
-      if (Module2["monitorRunDependencies"]) {
-        Module2["monitorRunDependencies"](runDependencies);
-      }
-      if (runDependencies == 0) {
-        if (runDependencyWatcher !== null) {
-          clearInterval(runDependencyWatcher);
-          runDependencyWatcher = null;
-        }
-        if (dependenciesFulfilled) {
-          var callback = dependenciesFulfilled;
-          dependenciesFulfilled = null;
-          callback();
-        }
-      }
-    }
-    Module2["preloadedImages"] = {};
-    Module2["preloadedAudios"] = {};
-    function abort(what) {
-      if (Module2["onAbort"]) {
-        Module2["onAbort"](what);
-      }
-      what += "";
-      err(what);
-      ABORT = true;
-      EXITSTATUS = 1;
-      what = "abort(" + what + "). Build with -s ASSERTIONS=1 for more info.";
-      var e = new WebAssembly.RuntimeError(what);
-      throw e;
-    }
-    var dataURIPrefix = "data:application/octet-stream;base64,";
-    function isDataURI(filename) {
-      return filename.startsWith(dataURIPrefix);
-    }
-    function isFileURI(filename) {
-      return filename.startsWith("file://");
-    }
-    var wasmBinaryFile = "argon2.wasm";
-    if (!isDataURI(wasmBinaryFile)) {
-      wasmBinaryFile = locateFile(wasmBinaryFile);
-    }
-    function getBinary(file) {
-      try {
-        if (file == wasmBinaryFile && wasmBinary) {
-          return new Uint8Array(wasmBinary);
-        }
-        if (readBinary) {
-          return readBinary(file);
-        } else {
-          throw "both async and sync fetching of the wasm failed";
-        }
-      } catch (err2) {
-        abort(err2);
-      }
-    }
-    function getBinaryPromise() {
-      if (!wasmBinary && (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER)) {
-        if (typeof fetch === "function" && !isFileURI(wasmBinaryFile)) {
-          return fetch(wasmBinaryFile, { credentials: "same-origin" }).then(function(response) {
-            if (!response["ok"]) {
-              throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
-            }
-            return response["arrayBuffer"]();
-          }).catch(function() {
-            return getBinary(wasmBinaryFile);
-          });
-        } else {
-          if (readAsync) {
-            return new Promise(function(resolve, reject) {
-              readAsync(wasmBinaryFile, function(response) {
-                resolve(new Uint8Array(response));
-              }, reject);
-            });
-          }
-        }
-      }
-      return Promise.resolve().then(function() {
-        return getBinary(wasmBinaryFile);
-      });
-    }
-    function createWasm() {
-      var info = { "a": asmLibraryArg };
-      function receiveInstance(instance, module3) {
-        var exports3 = instance.exports;
-        Module2["asm"] = exports3;
-        wasmMemory = Module2["asm"]["c"];
-        updateGlobalBufferAndViews(wasmMemory.buffer);
-        wasmTable = Module2["asm"]["k"];
-        addOnInit(Module2["asm"]["d"]);
-        removeRunDependency("wasm-instantiate");
-      }
-      addRunDependency("wasm-instantiate");
-      function receiveInstantiationResult(result) {
-        receiveInstance(result["instance"]);
-      }
-      function instantiateArrayBuffer(receiver) {
-        return getBinaryPromise().then(function(binary) {
-          var result = WebAssembly.instantiate(binary, info);
-          return result;
-        }).then(receiver, function(reason) {
-          err("failed to asynchronously prepare wasm: " + reason);
-          abort(reason);
-        });
-      }
-      function instantiateAsync() {
-        if (!wasmBinary && typeof WebAssembly.instantiateStreaming === "function" && !isDataURI(wasmBinaryFile) && !isFileURI(wasmBinaryFile) && typeof fetch === "function") {
-          return fetch(wasmBinaryFile, { credentials: "same-origin" }).then(function(response) {
-            var result = WebAssembly.instantiateStreaming(response, info);
-            return result.then(receiveInstantiationResult, function(reason) {
-              err("wasm streaming compile failed: " + reason);
-              err("falling back to ArrayBuffer instantiation");
-              return instantiateArrayBuffer(receiveInstantiationResult);
-            });
-          });
-        } else {
-          return instantiateArrayBuffer(receiveInstantiationResult);
-        }
-      }
-      if (Module2["instantiateWasm"]) {
-        try {
-          var exports2 = Module2["instantiateWasm"](info, receiveInstance);
-          return exports2;
-        } catch (e) {
-          err("Module.instantiateWasm callback failed with error: " + e);
-          return false;
-        }
-      }
-      instantiateAsync();
-      return {};
-    }
-    function callRuntimeCallbacks(callbacks) {
-      while (callbacks.length > 0) {
-        var callback = callbacks.shift();
-        if (typeof callback == "function") {
-          callback(Module2);
-          continue;
-        }
-        var func = callback.func;
-        if (typeof func === "number") {
-          if (callback.arg === void 0) {
-            wasmTable.get(func)();
-          } else {
-            wasmTable.get(func)(callback.arg);
-          }
-        } else {
-          func(callback.arg === void 0 ? null : callback.arg);
-        }
-      }
-    }
-    function _emscripten_memcpy_big(dest, src, num) {
-      HEAPU8.copyWithin(dest, src, src + num);
-    }
-    function emscripten_realloc_buffer(size) {
-      try {
-        wasmMemory.grow(size - buffer.byteLength + 65535 >>> 16);
-        updateGlobalBufferAndViews(wasmMemory.buffer);
-        return 1;
-      } catch (e) {
-      }
-    }
-    function _emscripten_resize_heap(requestedSize) {
-      var oldSize = HEAPU8.length;
-      requestedSize = requestedSize >>> 0;
-      var maxHeapSize = 2147418112;
-      if (requestedSize > maxHeapSize) {
-        return false;
-      }
-      for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
-        var overGrownHeapSize = oldSize * (1 + 0.2 / cutDown);
-        overGrownHeapSize = Math.min(overGrownHeapSize, requestedSize + 100663296);
-        var newSize = Math.min(maxHeapSize, alignUp(Math.max(requestedSize, overGrownHeapSize), 65536));
-        var replacement = emscripten_realloc_buffer(newSize);
-        if (replacement) {
-          return true;
-        }
-      }
-      return false;
-    }
-    var asmLibraryArg = { "a": _emscripten_memcpy_big, "b": _emscripten_resize_heap };
-    var asm = createWasm();
-    var ___wasm_call_ctors = Module2["___wasm_call_ctors"] = function() {
-      return (___wasm_call_ctors = Module2["___wasm_call_ctors"] = Module2["asm"]["d"]).apply(null, arguments);
-    };
-    var _argon2_hash = Module2["_argon2_hash"] = function() {
-      return (_argon2_hash = Module2["_argon2_hash"] = Module2["asm"]["e"]).apply(null, arguments);
-    };
-    var _malloc = Module2["_malloc"] = function() {
-      return (_malloc = Module2["_malloc"] = Module2["asm"]["f"]).apply(null, arguments);
-    };
-    var _free = Module2["_free"] = function() {
-      return (_free = Module2["_free"] = Module2["asm"]["g"]).apply(null, arguments);
-    };
-    var _argon2_verify = Module2["_argon2_verify"] = function() {
-      return (_argon2_verify = Module2["_argon2_verify"] = Module2["asm"]["h"]).apply(null, arguments);
-    };
-    var _argon2_error_message = Module2["_argon2_error_message"] = function() {
-      return (_argon2_error_message = Module2["_argon2_error_message"] = Module2["asm"]["i"]).apply(null, arguments);
-    };
-    var _argon2_encodedlen = Module2["_argon2_encodedlen"] = function() {
-      return (_argon2_encodedlen = Module2["_argon2_encodedlen"] = Module2["asm"]["j"]).apply(null, arguments);
-    };
-    var _argon2_hash_ext = Module2["_argon2_hash_ext"] = function() {
-      return (_argon2_hash_ext = Module2["_argon2_hash_ext"] = Module2["asm"]["l"]).apply(null, arguments);
-    };
-    var _argon2_verify_ext = Module2["_argon2_verify_ext"] = function() {
-      return (_argon2_verify_ext = Module2["_argon2_verify_ext"] = Module2["asm"]["m"]).apply(null, arguments);
-    };
-    var stackAlloc = Module2["stackAlloc"] = function() {
-      return (stackAlloc = Module2["stackAlloc"] = Module2["asm"]["n"]).apply(null, arguments);
-    };
-    Module2["allocate"] = allocate;
-    Module2["UTF8ToString"] = UTF8ToString;
-    Module2["ALLOC_NORMAL"] = ALLOC_NORMAL;
-    var calledRun;
-    function ExitStatus(status) {
-      this.name = "ExitStatus";
-      this.message = "Program terminated with exit(" + status + ")";
-      this.status = status;
-    }
-    dependenciesFulfilled = function runCaller() {
-      if (!calledRun)
-        run();
-      if (!calledRun)
-        dependenciesFulfilled = runCaller;
-    };
-    function run(args) {
-      args = args || arguments_;
-      if (runDependencies > 0) {
-        return;
-      }
-      preRun();
-      if (runDependencies > 0) {
-        return;
-      }
-      function doRun() {
-        if (calledRun)
-          return;
-        calledRun = true;
-        Module2["calledRun"] = true;
-        if (ABORT)
-          return;
-        initRuntime();
-        if (Module2["onRuntimeInitialized"])
-          Module2["onRuntimeInitialized"]();
-        postRun();
-      }
-      if (Module2["setStatus"]) {
-        Module2["setStatus"]("Running...");
-        setTimeout(function() {
-          setTimeout(function() {
-            Module2["setStatus"]("");
-          }, 1);
-          doRun();
-        }, 1);
-      } else {
-        doRun();
-      }
-    }
-    Module2["run"] = run;
-    if (Module2["preInit"]) {
-      if (typeof Module2["preInit"] == "function")
-        Module2["preInit"] = [Module2["preInit"]];
-      while (Module2["preInit"].length > 0) {
-        Module2["preInit"].pop()();
-      }
-    }
-    run();
-    if (typeof module2 !== "undefined")
-      module2.exports = Module2;
-    Module2.unloadRuntime = function() {
-      if (typeof self !== "undefined") {
-        delete self.Module;
-      }
-      Module2 = jsModule = wasmMemory = wasmTable = asm = buffer = HEAP8 = HEAPU8 = HEAP16 = HEAPU16 = HEAP32 = HEAPU32 = HEAPF32 = HEAPF64 = void 0;
-      if (typeof module2 !== "undefined") {
-        delete module2.exports;
-      }
-    };
-  }
-});
-
-// node_modules/argon2-browser/dist/argon2.wasm
-var require_argon22 = __commonJS({
-  "node_modules/argon2-browser/dist/argon2.wasm"(exports, module2) {
-    module2.exports = "./argon2.wasm";
-  }
-});
-
-// node_modules/argon2-browser/lib/argon2.js
-var require_argon23 = __commonJS({
-  "node_modules/argon2-browser/lib/argon2.js"(exports, module2) {
-    (function(root, factory) {
-      if (typeof define === "function" && define.amd) {
-        define([], factory);
-      } else if (typeof module2 === "object" && module2.exports) {
-        module2.exports = factory();
-      } else {
-        root.argon2 = factory();
-      }
-    })(typeof self !== "undefined" ? self : exports, function() {
-      const global = typeof self !== "undefined" ? self : this;
-      const ArgonType2 = {
-        Argon2d: 0,
-        Argon2i: 1,
-        Argon2id: 2
-      };
-      function loadModule(mem) {
-        if (loadModule._promise) {
-          return loadModule._promise;
-        }
-        if (loadModule._module) {
-          return Promise.resolve(loadModule._module);
-        }
-        let promise;
-        if (global.process && global.process.versions && global.process.versions.node) {
-          promise = loadWasmModule().then(
-            (Module2) => new Promise((resolve) => {
-              Module2.postRun = () => resolve(Module2);
-            })
-          );
-        } else {
-          promise = loadWasmBinary().then((wasmBinary) => {
-            const wasmMemory = mem ? createWasmMemory(mem) : void 0;
-            return initWasm(wasmBinary, wasmMemory);
-          });
-        }
-        loadModule._promise = promise;
-        return promise.then((Module2) => {
-          loadModule._module = Module2;
-          delete loadModule._promise;
-          return Module2;
-        });
-      }
-      function initWasm(wasmBinary, wasmMemory) {
-        return new Promise((resolve) => {
-          global.Module = {
-            wasmBinary,
-            wasmMemory,
-            postRun() {
-              resolve(Module);
-            }
-          };
-          return loadWasmModule();
-        });
-      }
-      function loadWasmModule() {
-        if (global.loadArgon2WasmModule) {
-          return global.loadArgon2WasmModule();
-        }
-        if (typeof require === "function") {
-          return Promise.resolve(require_argon2());
-        }
-        return Promise.resolve().then(() => __toESM(require_argon2()));
-      }
-      function loadWasmBinary() {
-        if (global.loadArgon2WasmBinary) {
-          return global.loadArgon2WasmBinary();
-        }
-        if (typeof require === "function") {
-          return Promise.resolve(require_argon22()).then(
-            (wasmModule) => {
-              return decodeWasmBinary(wasmModule);
-            }
-          );
-        }
-        const wasmPath = global.argon2WasmPath || "node_modules/argon2-browser/dist/argon2.wasm";
-        return fetch(wasmPath).then((response) => response.arrayBuffer()).then((ab) => new Uint8Array(ab));
-      }
-      function decodeWasmBinary(base64) {
-        const text = atob(base64);
-        const binary = new Uint8Array(new ArrayBuffer(text.length));
-        for (let i = 0; i < text.length; i++) {
-          binary[i] = text.charCodeAt(i);
-        }
-        return binary;
-      }
-      function createWasmMemory(mem) {
-        const KB = 1024;
-        const MB = 1024 * KB;
-        const GB = 1024 * MB;
-        const WASM_PAGE_SIZE = 64 * KB;
-        const totalMemory = (2 * GB - 64 * KB) / WASM_PAGE_SIZE;
-        const initialMemory = Math.min(
-          Math.max(Math.ceil(mem * KB / WASM_PAGE_SIZE), 256) + 256,
-          totalMemory
-        );
-        return new WebAssembly.Memory({
-          initial: initialMemory,
-          maximum: totalMemory
-        });
-      }
-      function allocateArray(Module2, arr) {
-        return Module2.allocate(arr, "i8", Module2.ALLOC_NORMAL);
-      }
-      function allocateArrayStr(Module2, arr) {
-        const nullTerminatedArray = new Uint8Array([...arr, 0]);
-        return allocateArray(Module2, nullTerminatedArray);
-      }
-      function encodeUtf8(str) {
-        if (typeof str !== "string") {
-          return str;
-        }
-        if (typeof TextEncoder === "function") {
-          return new TextEncoder().encode(str);
-        } else if (typeof Buffer === "function") {
-          return Buffer.from(str);
-        } else {
-          throw new Error("Don't know how to encode UTF8");
-        }
-      }
-      function argon2Hash2(params) {
-        const mCost = params.mem || 1024;
-        return loadModule(mCost).then((Module2) => {
-          const tCost = params.time || 1;
-          const parallelism = params.parallelism || 1;
-          const pwdEncoded = encodeUtf8(params.pass);
-          const pwd = allocateArrayStr(Module2, pwdEncoded);
-          const pwdlen = pwdEncoded.length;
-          const saltEncoded = encodeUtf8(params.salt);
-          const salt = allocateArrayStr(Module2, saltEncoded);
-          const saltlen = saltEncoded.length;
-          const argon2Type = params.type || ArgonType2.Argon2d;
-          const hash = Module2.allocate(
-            new Array(params.hashLen || 24),
-            "i8",
-            Module2.ALLOC_NORMAL
-          );
-          const secret = params.secret ? allocateArray(Module2, params.secret) : 0;
-          const secretlen = params.secret ? params.secret.byteLength : 0;
-          const ad = params.ad ? allocateArray(Module2, params.ad) : 0;
-          const adlen = params.ad ? params.ad.byteLength : 0;
-          const hashlen = params.hashLen || 24;
-          const encodedlen = Module2._argon2_encodedlen(
-            tCost,
-            mCost,
-            parallelism,
-            saltlen,
-            hashlen,
-            argon2Type
-          );
-          const encoded = Module2.allocate(
-            new Array(encodedlen + 1),
-            "i8",
-            Module2.ALLOC_NORMAL
-          );
-          const version = 19;
-          let err;
-          let res;
-          try {
-            res = Module2._argon2_hash_ext(
-              tCost,
-              mCost,
-              parallelism,
-              pwd,
-              pwdlen,
-              salt,
-              saltlen,
-              hash,
-              hashlen,
-              encoded,
-              encodedlen,
-              argon2Type,
-              secret,
-              secretlen,
-              ad,
-              adlen,
-              version
-            );
-          } catch (e) {
-            err = e;
-          }
-          let result;
-          if (res === 0 && !err) {
-            let hashStr = "";
-            const hashArr = new Uint8Array(hashlen);
-            for (let i = 0; i < hashlen; i++) {
-              const byte = Module2.HEAP8[hash + i];
-              hashArr[i] = byte;
-              hashStr += ("0" + (255 & byte).toString(16)).slice(-2);
-            }
-            const encodedStr = Module2.UTF8ToString(encoded);
-            result = {
-              hash: hashArr,
-              hashHex: hashStr,
-              encoded: encodedStr
-            };
-          } else {
-            try {
-              if (!err) {
-                err = Module2.UTF8ToString(
-                  Module2._argon2_error_message(res)
-                );
-              }
-            } catch (e) {
-            }
-            result = { message: err, code: res };
-          }
-          try {
-            Module2._free(pwd);
-            Module2._free(salt);
-            Module2._free(hash);
-            Module2._free(encoded);
-            if (ad) {
-              Module2._free(ad);
-            }
-            if (secret) {
-              Module2._free(secret);
-            }
-          } catch (e) {
-          }
-          if (err) {
-            throw result;
-          } else {
-            return result;
-          }
-        });
-      }
-      function argon2Verify(params) {
-        return loadModule().then((Module2) => {
-          const pwdEncoded = encodeUtf8(params.pass);
-          const pwd = allocateArrayStr(Module2, pwdEncoded);
-          const pwdlen = pwdEncoded.length;
-          const secret = params.secret ? allocateArray(Module2, params.secret) : 0;
-          const secretlen = params.secret ? params.secret.byteLength : 0;
-          const ad = params.ad ? allocateArray(Module2, params.ad) : 0;
-          const adlen = params.ad ? params.ad.byteLength : 0;
-          const encEncoded = encodeUtf8(params.encoded);
-          const enc = allocateArrayStr(Module2, encEncoded);
-          let argon2Type = params.type;
-          if (argon2Type === void 0) {
-            let typeStr = params.encoded.split("$")[1];
-            if (typeStr) {
-              typeStr = typeStr.replace("a", "A");
-              argon2Type = ArgonType2[typeStr] || ArgonType2.Argon2d;
-            }
-          }
-          let err;
-          let res;
-          try {
-            res = Module2._argon2_verify_ext(
-              enc,
-              pwd,
-              pwdlen,
-              secret,
-              secretlen,
-              ad,
-              adlen,
-              argon2Type
-            );
-          } catch (e) {
-            err = e;
-          }
-          let result;
-          if (res || err) {
-            try {
-              if (!err) {
-                err = Module2.UTF8ToString(
-                  Module2._argon2_error_message(res)
-                );
-              }
-            } catch (e) {
-            }
-            result = { message: err, code: res };
-          }
-          try {
-            Module2._free(pwd);
-            Module2._free(enc);
-          } catch (e) {
-          }
-          if (err) {
-            throw result;
-          } else {
-            return result;
-          }
-        });
-      }
-      function unloadRuntime() {
-        if (loadModule._module) {
-          loadModule._module.unloadRuntime();
-          delete loadModule._promise;
-          delete loadModule._module;
-        }
-      }
-      return {
-        ArgonType: ArgonType2,
-        hash: argon2Hash2,
-        verify: argon2Verify,
-        unloadRuntime
-      };
-    });
-  }
-});
 
 // src/main.js
 var main_exports = {};
@@ -952,13 +29,107 @@ __export(main_exports, {
 module.exports = __toCommonJS(main_exports);
 var import_obsidian3 = require("obsidian");
 
-// src/crypto.js
-var import_argon2_browser = __toESM(require_argon23());
+// node_modules/@noble/hashes/esm/_u64.js
+var U32_MASK64 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
+var _32n = /* @__PURE__ */ BigInt(32);
+function fromBig(n, le = false) {
+  if (le)
+    return { h: Number(n & U32_MASK64), l: Number(n >> _32n & U32_MASK64) };
+  return { h: Number(n >> _32n & U32_MASK64) | 0, l: Number(n & U32_MASK64) | 0 };
+}
+var rotrSH = (h, l, s) => h >>> s | l << 32 - s;
+var rotrSL = (h, l, s) => h << 32 - s | l >>> s;
+var rotrBH = (h, l, s) => h << 64 - s | l >>> s - 32;
+var rotrBL = (h, l, s) => h >>> s - 32 | l << 64 - s;
+var rotr32H = (_h, l) => l;
+var rotr32L = (h, _l) => h;
+function add(Ah, Al, Bh, Bl) {
+  const l = (Al >>> 0) + (Bl >>> 0);
+  return { h: Ah + Bh + (l / 2 ** 32 | 0) | 0, l: l | 0 };
+}
+var add3L = (Al, Bl, Cl) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0);
+var add3H = (low, Ah, Bh, Ch) => Ah + Bh + Ch + (low / 2 ** 32 | 0) | 0;
 
 // node_modules/@noble/hashes/esm/crypto.js
 var crypto = typeof globalThis === "object" && "crypto" in globalThis ? globalThis.crypto : void 0;
 
 // node_modules/@noble/hashes/esm/utils.js
+function isBytes(a) {
+  return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array";
+}
+function anumber(n) {
+  if (!Number.isSafeInteger(n) || n < 0)
+    throw new Error("positive integer expected, got " + n);
+}
+function abytes(b, ...lengths) {
+  if (!isBytes(b))
+    throw new Error("Uint8Array expected");
+  if (lengths.length > 0 && !lengths.includes(b.length))
+    throw new Error("Uint8Array expected of length " + lengths + ", got length=" + b.length);
+}
+function aexists(instance, checkFinished = true) {
+  if (instance.destroyed)
+    throw new Error("Hash instance has been destroyed");
+  if (checkFinished && instance.finished)
+    throw new Error("Hash#digest() has already been called");
+}
+function aoutput(out, instance) {
+  abytes(out);
+  const min = instance.outputLen;
+  if (out.length < min) {
+    throw new Error("digestInto() expects output buffer of length at least " + min);
+  }
+}
+function u8(arr) {
+  return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
+}
+function u32(arr) {
+  return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+}
+function clean(...arrays) {
+  for (let i = 0; i < arrays.length; i++) {
+    arrays[i].fill(0);
+  }
+}
+var isLE = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
+function byteSwap(word) {
+  return word << 24 & 4278190080 | word << 8 & 16711680 | word >>> 8 & 65280 | word >>> 24 & 255;
+}
+var swap8IfBE = isLE ? (n) => n : (n) => byteSwap(n);
+function byteSwap32(arr) {
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = byteSwap(arr[i]);
+  }
+  return arr;
+}
+var swap32IfBE = isLE ? (u) => u : byteSwap32;
+function utf8ToBytes(str) {
+  if (typeof str !== "string")
+    throw new Error("string expected");
+  return new Uint8Array(new TextEncoder().encode(str));
+}
+function toBytes(data) {
+  if (typeof data === "string")
+    data = utf8ToBytes(data);
+  abytes(data);
+  return data;
+}
+function kdfInputToBytes(data) {
+  if (typeof data === "string")
+    data = utf8ToBytes(data);
+  abytes(data);
+  return data;
+}
+var Hash = class {
+};
+function createOptHasher(hashCons) {
+  const hashC = (msg, opts) => hashCons(opts).update(toBytes(msg)).digest();
+  const tmp = hashCons({});
+  hashC.outputLen = tmp.outputLen;
+  hashC.blockLen = tmp.blockLen;
+  hashC.create = (opts) => hashCons(opts);
+  return hashC;
+}
 function randomBytes(bytesLength = 32) {
   if (crypto && typeof crypto.getRandomValues === "function") {
     return crypto.getRandomValues(new Uint8Array(bytesLength));
@@ -969,6 +140,830 @@ function randomBytes(bytesLength = 32) {
   throw new Error("crypto.getRandomValues must be defined");
 }
 
+// node_modules/@noble/hashes/esm/_blake.js
+var BSIGMA = /* @__PURE__ */ Uint8Array.from([
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  14,
+  10,
+  4,
+  8,
+  9,
+  15,
+  13,
+  6,
+  1,
+  12,
+  0,
+  2,
+  11,
+  7,
+  5,
+  3,
+  11,
+  8,
+  12,
+  0,
+  5,
+  2,
+  15,
+  13,
+  10,
+  14,
+  3,
+  6,
+  7,
+  1,
+  9,
+  4,
+  7,
+  9,
+  3,
+  1,
+  13,
+  12,
+  11,
+  14,
+  2,
+  6,
+  5,
+  10,
+  4,
+  0,
+  15,
+  8,
+  9,
+  0,
+  5,
+  7,
+  2,
+  4,
+  10,
+  15,
+  14,
+  1,
+  11,
+  12,
+  6,
+  8,
+  3,
+  13,
+  2,
+  12,
+  6,
+  10,
+  0,
+  11,
+  8,
+  3,
+  4,
+  13,
+  7,
+  5,
+  15,
+  14,
+  1,
+  9,
+  12,
+  5,
+  1,
+  15,
+  14,
+  13,
+  4,
+  10,
+  0,
+  7,
+  6,
+  3,
+  9,
+  2,
+  8,
+  11,
+  13,
+  11,
+  7,
+  14,
+  12,
+  1,
+  3,
+  9,
+  5,
+  0,
+  15,
+  4,
+  8,
+  6,
+  2,
+  10,
+  6,
+  15,
+  14,
+  9,
+  11,
+  3,
+  0,
+  8,
+  12,
+  2,
+  13,
+  7,
+  1,
+  4,
+  10,
+  5,
+  10,
+  2,
+  8,
+  4,
+  7,
+  6,
+  1,
+  5,
+  15,
+  11,
+  9,
+  14,
+  3,
+  12,
+  13,
+  0,
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  14,
+  10,
+  4,
+  8,
+  9,
+  15,
+  13,
+  6,
+  1,
+  12,
+  0,
+  2,
+  11,
+  7,
+  5,
+  3,
+  // Blake1, unused in others
+  11,
+  8,
+  12,
+  0,
+  5,
+  2,
+  15,
+  13,
+  10,
+  14,
+  3,
+  6,
+  7,
+  1,
+  9,
+  4,
+  7,
+  9,
+  3,
+  1,
+  13,
+  12,
+  11,
+  14,
+  2,
+  6,
+  5,
+  10,
+  4,
+  0,
+  15,
+  8,
+  9,
+  0,
+  5,
+  7,
+  2,
+  4,
+  10,
+  15,
+  14,
+  1,
+  11,
+  12,
+  6,
+  8,
+  3,
+  13,
+  2,
+  12,
+  6,
+  10,
+  0,
+  11,
+  8,
+  3,
+  4,
+  13,
+  7,
+  5,
+  15,
+  14,
+  1,
+  9
+]);
+
+// node_modules/@noble/hashes/esm/blake2.js
+var B2B_IV = /* @__PURE__ */ Uint32Array.from([
+  4089235720,
+  1779033703,
+  2227873595,
+  3144134277,
+  4271175723,
+  1013904242,
+  1595750129,
+  2773480762,
+  2917565137,
+  1359893119,
+  725511199,
+  2600822924,
+  4215389547,
+  528734635,
+  327033209,
+  1541459225
+]);
+var BBUF = /* @__PURE__ */ new Uint32Array(32);
+function G1b(a, b, c, d, msg, x) {
+  const Xl = msg[x], Xh = msg[x + 1];
+  let Al = BBUF[2 * a], Ah = BBUF[2 * a + 1];
+  let Bl = BBUF[2 * b], Bh = BBUF[2 * b + 1];
+  let Cl = BBUF[2 * c], Ch = BBUF[2 * c + 1];
+  let Dl = BBUF[2 * d], Dh = BBUF[2 * d + 1];
+  let ll = add3L(Al, Bl, Xl);
+  Ah = add3H(ll, Ah, Bh, Xh);
+  Al = ll | 0;
+  ({ Dh, Dl } = { Dh: Dh ^ Ah, Dl: Dl ^ Al });
+  ({ Dh, Dl } = { Dh: rotr32H(Dh, Dl), Dl: rotr32L(Dh, Dl) });
+  ({ h: Ch, l: Cl } = add(Ch, Cl, Dh, Dl));
+  ({ Bh, Bl } = { Bh: Bh ^ Ch, Bl: Bl ^ Cl });
+  ({ Bh, Bl } = { Bh: rotrSH(Bh, Bl, 24), Bl: rotrSL(Bh, Bl, 24) });
+  BBUF[2 * a] = Al, BBUF[2 * a + 1] = Ah;
+  BBUF[2 * b] = Bl, BBUF[2 * b + 1] = Bh;
+  BBUF[2 * c] = Cl, BBUF[2 * c + 1] = Ch;
+  BBUF[2 * d] = Dl, BBUF[2 * d + 1] = Dh;
+}
+function G2b(a, b, c, d, msg, x) {
+  const Xl = msg[x], Xh = msg[x + 1];
+  let Al = BBUF[2 * a], Ah = BBUF[2 * a + 1];
+  let Bl = BBUF[2 * b], Bh = BBUF[2 * b + 1];
+  let Cl = BBUF[2 * c], Ch = BBUF[2 * c + 1];
+  let Dl = BBUF[2 * d], Dh = BBUF[2 * d + 1];
+  let ll = add3L(Al, Bl, Xl);
+  Ah = add3H(ll, Ah, Bh, Xh);
+  Al = ll | 0;
+  ({ Dh, Dl } = { Dh: Dh ^ Ah, Dl: Dl ^ Al });
+  ({ Dh, Dl } = { Dh: rotrSH(Dh, Dl, 16), Dl: rotrSL(Dh, Dl, 16) });
+  ({ h: Ch, l: Cl } = add(Ch, Cl, Dh, Dl));
+  ({ Bh, Bl } = { Bh: Bh ^ Ch, Bl: Bl ^ Cl });
+  ({ Bh, Bl } = { Bh: rotrBH(Bh, Bl, 63), Bl: rotrBL(Bh, Bl, 63) });
+  BBUF[2 * a] = Al, BBUF[2 * a + 1] = Ah;
+  BBUF[2 * b] = Bl, BBUF[2 * b + 1] = Bh;
+  BBUF[2 * c] = Cl, BBUF[2 * c + 1] = Ch;
+  BBUF[2 * d] = Dl, BBUF[2 * d + 1] = Dh;
+}
+function checkBlake2Opts(outputLen, opts = {}, keyLen, saltLen, persLen) {
+  anumber(keyLen);
+  if (outputLen < 0 || outputLen > keyLen)
+    throw new Error("outputLen bigger than keyLen");
+  const { key, salt, personalization } = opts;
+  if (key !== void 0 && (key.length < 1 || key.length > keyLen))
+    throw new Error("key length must be undefined or 1.." + keyLen);
+  if (salt !== void 0 && salt.length !== saltLen)
+    throw new Error("salt must be undefined or " + saltLen);
+  if (personalization !== void 0 && personalization.length !== persLen)
+    throw new Error("personalization must be undefined or " + persLen);
+}
+var BLAKE2 = class extends Hash {
+  constructor(blockLen, outputLen) {
+    super();
+    this.finished = false;
+    this.destroyed = false;
+    this.length = 0;
+    this.pos = 0;
+    anumber(blockLen);
+    anumber(outputLen);
+    this.blockLen = blockLen;
+    this.outputLen = outputLen;
+    this.buffer = new Uint8Array(blockLen);
+    this.buffer32 = u32(this.buffer);
+  }
+  update(data) {
+    aexists(this);
+    data = toBytes(data);
+    abytes(data);
+    const { blockLen, buffer, buffer32 } = this;
+    const len = data.length;
+    const offset = data.byteOffset;
+    const buf = data.buffer;
+    for (let pos = 0; pos < len; ) {
+      if (this.pos === blockLen) {
+        swap32IfBE(buffer32);
+        this.compress(buffer32, 0, false);
+        swap32IfBE(buffer32);
+        this.pos = 0;
+      }
+      const take = Math.min(blockLen - this.pos, len - pos);
+      const dataOffset = offset + pos;
+      if (take === blockLen && !(dataOffset % 4) && pos + take < len) {
+        const data32 = new Uint32Array(buf, dataOffset, Math.floor((len - pos) / 4));
+        swap32IfBE(data32);
+        for (let pos32 = 0; pos + blockLen < len; pos32 += buffer32.length, pos += blockLen) {
+          this.length += blockLen;
+          this.compress(data32, pos32, false);
+        }
+        swap32IfBE(data32);
+        continue;
+      }
+      buffer.set(data.subarray(pos, pos + take), this.pos);
+      this.pos += take;
+      this.length += take;
+      pos += take;
+    }
+    return this;
+  }
+  digestInto(out) {
+    aexists(this);
+    aoutput(out, this);
+    const { pos, buffer32 } = this;
+    this.finished = true;
+    clean(this.buffer.subarray(pos));
+    swap32IfBE(buffer32);
+    this.compress(buffer32, 0, true);
+    swap32IfBE(buffer32);
+    const out32 = u32(out);
+    this.get().forEach((v, i) => out32[i] = swap8IfBE(v));
+  }
+  digest() {
+    const { buffer, outputLen } = this;
+    this.digestInto(buffer);
+    const res = buffer.slice(0, outputLen);
+    this.destroy();
+    return res;
+  }
+  _cloneInto(to) {
+    const { buffer, length, finished, destroyed, outputLen, pos } = this;
+    to || (to = new this.constructor({ dkLen: outputLen }));
+    to.set(...this.get());
+    to.buffer.set(buffer);
+    to.destroyed = destroyed;
+    to.finished = finished;
+    to.length = length;
+    to.pos = pos;
+    to.outputLen = outputLen;
+    return to;
+  }
+  clone() {
+    return this._cloneInto();
+  }
+};
+var BLAKE2b = class extends BLAKE2 {
+  constructor(opts = {}) {
+    const olen = opts.dkLen === void 0 ? 64 : opts.dkLen;
+    super(128, olen);
+    this.v0l = B2B_IV[0] | 0;
+    this.v0h = B2B_IV[1] | 0;
+    this.v1l = B2B_IV[2] | 0;
+    this.v1h = B2B_IV[3] | 0;
+    this.v2l = B2B_IV[4] | 0;
+    this.v2h = B2B_IV[5] | 0;
+    this.v3l = B2B_IV[6] | 0;
+    this.v3h = B2B_IV[7] | 0;
+    this.v4l = B2B_IV[8] | 0;
+    this.v4h = B2B_IV[9] | 0;
+    this.v5l = B2B_IV[10] | 0;
+    this.v5h = B2B_IV[11] | 0;
+    this.v6l = B2B_IV[12] | 0;
+    this.v6h = B2B_IV[13] | 0;
+    this.v7l = B2B_IV[14] | 0;
+    this.v7h = B2B_IV[15] | 0;
+    checkBlake2Opts(olen, opts, 64, 16, 16);
+    let { key, personalization, salt } = opts;
+    let keyLength = 0;
+    if (key !== void 0) {
+      key = toBytes(key);
+      keyLength = key.length;
+    }
+    this.v0l ^= this.outputLen | keyLength << 8 | 1 << 16 | 1 << 24;
+    if (salt !== void 0) {
+      salt = toBytes(salt);
+      const slt = u32(salt);
+      this.v4l ^= swap8IfBE(slt[0]);
+      this.v4h ^= swap8IfBE(slt[1]);
+      this.v5l ^= swap8IfBE(slt[2]);
+      this.v5h ^= swap8IfBE(slt[3]);
+    }
+    if (personalization !== void 0) {
+      personalization = toBytes(personalization);
+      const pers = u32(personalization);
+      this.v6l ^= swap8IfBE(pers[0]);
+      this.v6h ^= swap8IfBE(pers[1]);
+      this.v7l ^= swap8IfBE(pers[2]);
+      this.v7h ^= swap8IfBE(pers[3]);
+    }
+    if (key !== void 0) {
+      const tmp = new Uint8Array(this.blockLen);
+      tmp.set(key);
+      this.update(tmp);
+    }
+  }
+  // prettier-ignore
+  get() {
+    let { v0l, v0h, v1l, v1h, v2l, v2h, v3l, v3h, v4l, v4h, v5l, v5h, v6l, v6h, v7l, v7h } = this;
+    return [v0l, v0h, v1l, v1h, v2l, v2h, v3l, v3h, v4l, v4h, v5l, v5h, v6l, v6h, v7l, v7h];
+  }
+  // prettier-ignore
+  set(v0l, v0h, v1l, v1h, v2l, v2h, v3l, v3h, v4l, v4h, v5l, v5h, v6l, v6h, v7l, v7h) {
+    this.v0l = v0l | 0;
+    this.v0h = v0h | 0;
+    this.v1l = v1l | 0;
+    this.v1h = v1h | 0;
+    this.v2l = v2l | 0;
+    this.v2h = v2h | 0;
+    this.v3l = v3l | 0;
+    this.v3h = v3h | 0;
+    this.v4l = v4l | 0;
+    this.v4h = v4h | 0;
+    this.v5l = v5l | 0;
+    this.v5h = v5h | 0;
+    this.v6l = v6l | 0;
+    this.v6h = v6h | 0;
+    this.v7l = v7l | 0;
+    this.v7h = v7h | 0;
+  }
+  compress(msg, offset, isLast) {
+    this.get().forEach((v, i) => BBUF[i] = v);
+    BBUF.set(B2B_IV, 16);
+    let { h, l } = fromBig(BigInt(this.length));
+    BBUF[24] = B2B_IV[8] ^ l;
+    BBUF[25] = B2B_IV[9] ^ h;
+    if (isLast) {
+      BBUF[28] = ~BBUF[28];
+      BBUF[29] = ~BBUF[29];
+    }
+    let j = 0;
+    const s = BSIGMA;
+    for (let i = 0; i < 12; i++) {
+      G1b(0, 4, 8, 12, msg, offset + 2 * s[j++]);
+      G2b(0, 4, 8, 12, msg, offset + 2 * s[j++]);
+      G1b(1, 5, 9, 13, msg, offset + 2 * s[j++]);
+      G2b(1, 5, 9, 13, msg, offset + 2 * s[j++]);
+      G1b(2, 6, 10, 14, msg, offset + 2 * s[j++]);
+      G2b(2, 6, 10, 14, msg, offset + 2 * s[j++]);
+      G1b(3, 7, 11, 15, msg, offset + 2 * s[j++]);
+      G2b(3, 7, 11, 15, msg, offset + 2 * s[j++]);
+      G1b(0, 5, 10, 15, msg, offset + 2 * s[j++]);
+      G2b(0, 5, 10, 15, msg, offset + 2 * s[j++]);
+      G1b(1, 6, 11, 12, msg, offset + 2 * s[j++]);
+      G2b(1, 6, 11, 12, msg, offset + 2 * s[j++]);
+      G1b(2, 7, 8, 13, msg, offset + 2 * s[j++]);
+      G2b(2, 7, 8, 13, msg, offset + 2 * s[j++]);
+      G1b(3, 4, 9, 14, msg, offset + 2 * s[j++]);
+      G2b(3, 4, 9, 14, msg, offset + 2 * s[j++]);
+    }
+    this.v0l ^= BBUF[0] ^ BBUF[16];
+    this.v0h ^= BBUF[1] ^ BBUF[17];
+    this.v1l ^= BBUF[2] ^ BBUF[18];
+    this.v1h ^= BBUF[3] ^ BBUF[19];
+    this.v2l ^= BBUF[4] ^ BBUF[20];
+    this.v2h ^= BBUF[5] ^ BBUF[21];
+    this.v3l ^= BBUF[6] ^ BBUF[22];
+    this.v3h ^= BBUF[7] ^ BBUF[23];
+    this.v4l ^= BBUF[8] ^ BBUF[24];
+    this.v4h ^= BBUF[9] ^ BBUF[25];
+    this.v5l ^= BBUF[10] ^ BBUF[26];
+    this.v5h ^= BBUF[11] ^ BBUF[27];
+    this.v6l ^= BBUF[12] ^ BBUF[28];
+    this.v6h ^= BBUF[13] ^ BBUF[29];
+    this.v7l ^= BBUF[14] ^ BBUF[30];
+    this.v7h ^= BBUF[15] ^ BBUF[31];
+    clean(BBUF);
+  }
+  destroy() {
+    this.destroyed = true;
+    clean(this.buffer32);
+    this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  }
+};
+var blake2b = /* @__PURE__ */ createOptHasher((opts) => new BLAKE2b(opts));
+
+// node_modules/@noble/hashes/esm/argon2.js
+var AT = { Argond2d: 0, Argon2i: 1, Argon2id: 2 };
+var ARGON2_SYNC_POINTS = 4;
+var abytesOrZero = (buf) => {
+  if (buf === void 0)
+    return Uint8Array.of();
+  return kdfInputToBytes(buf);
+};
+function mul(a, b) {
+  const aL = a & 65535;
+  const aH = a >>> 16;
+  const bL = b & 65535;
+  const bH = b >>> 16;
+  const ll = Math.imul(aL, bL);
+  const hl = Math.imul(aH, bL);
+  const lh = Math.imul(aL, bH);
+  const hh = Math.imul(aH, bH);
+  const carry = (ll >>> 16) + (hl & 65535) + lh;
+  const high = hh + (hl >>> 16) + (carry >>> 16) | 0;
+  const low = carry << 16 | ll & 65535;
+  return { h: high, l: low };
+}
+function mul2(a, b) {
+  const { h, l } = mul(a, b);
+  return { h: (h << 1 | l >>> 31) & 4294967295, l: l << 1 & 4294967295 };
+}
+function blamka(Ah, Al, Bh, Bl) {
+  const { h: Ch, l: Cl } = mul2(Al, Bl);
+  const Rll = add3L(Al, Bl, Cl);
+  return { h: add3H(Rll, Ah, Bh, Ch), l: Rll | 0 };
+}
+var A2_BUF = new Uint32Array(256);
+function G(a, b, c, d) {
+  let Al = A2_BUF[2 * a], Ah = A2_BUF[2 * a + 1];
+  let Bl = A2_BUF[2 * b], Bh = A2_BUF[2 * b + 1];
+  let Cl = A2_BUF[2 * c], Ch = A2_BUF[2 * c + 1];
+  let Dl = A2_BUF[2 * d], Dh = A2_BUF[2 * d + 1];
+  ({ h: Ah, l: Al } = blamka(Ah, Al, Bh, Bl));
+  ({ Dh, Dl } = { Dh: Dh ^ Ah, Dl: Dl ^ Al });
+  ({ Dh, Dl } = { Dh: rotr32H(Dh, Dl), Dl: rotr32L(Dh, Dl) });
+  ({ h: Ch, l: Cl } = blamka(Ch, Cl, Dh, Dl));
+  ({ Bh, Bl } = { Bh: Bh ^ Ch, Bl: Bl ^ Cl });
+  ({ Bh, Bl } = { Bh: rotrSH(Bh, Bl, 24), Bl: rotrSL(Bh, Bl, 24) });
+  ({ h: Ah, l: Al } = blamka(Ah, Al, Bh, Bl));
+  ({ Dh, Dl } = { Dh: Dh ^ Ah, Dl: Dl ^ Al });
+  ({ Dh, Dl } = { Dh: rotrSH(Dh, Dl, 16), Dl: rotrSL(Dh, Dl, 16) });
+  ({ h: Ch, l: Cl } = blamka(Ch, Cl, Dh, Dl));
+  ({ Bh, Bl } = { Bh: Bh ^ Ch, Bl: Bl ^ Cl });
+  ({ Bh, Bl } = { Bh: rotrBH(Bh, Bl, 63), Bl: rotrBL(Bh, Bl, 63) });
+  A2_BUF[2 * a] = Al, A2_BUF[2 * a + 1] = Ah;
+  A2_BUF[2 * b] = Bl, A2_BUF[2 * b + 1] = Bh;
+  A2_BUF[2 * c] = Cl, A2_BUF[2 * c + 1] = Ch;
+  A2_BUF[2 * d] = Dl, A2_BUF[2 * d + 1] = Dh;
+}
+function P(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15) {
+  G(v00, v04, v08, v12);
+  G(v01, v05, v09, v13);
+  G(v02, v06, v10, v14);
+  G(v03, v07, v11, v15);
+  G(v00, v05, v10, v15);
+  G(v01, v06, v11, v12);
+  G(v02, v07, v08, v13);
+  G(v03, v04, v09, v14);
+}
+function block(x, xPos, yPos, outPos, needXor) {
+  for (let i = 0; i < 256; i++)
+    A2_BUF[i] = x[xPos + i] ^ x[yPos + i];
+  for (let i = 0; i < 128; i += 16) {
+    P(i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, i + 10, i + 11, i + 12, i + 13, i + 14, i + 15);
+  }
+  for (let i = 0; i < 16; i += 2) {
+    P(i, i + 1, i + 16, i + 17, i + 32, i + 33, i + 48, i + 49, i + 64, i + 65, i + 80, i + 81, i + 96, i + 97, i + 112, i + 113);
+  }
+  if (needXor)
+    for (let i = 0; i < 256; i++)
+      x[outPos + i] ^= A2_BUF[i] ^ x[xPos + i] ^ x[yPos + i];
+  else
+    for (let i = 0; i < 256; i++)
+      x[outPos + i] = A2_BUF[i] ^ x[xPos + i] ^ x[yPos + i];
+  clean(A2_BUF);
+}
+function Hp(A, dkLen) {
+  const A8 = u8(A);
+  const T = new Uint32Array(1);
+  const T8 = u8(T);
+  T[0] = dkLen;
+  if (dkLen <= 64)
+    return blake2b.create({ dkLen }).update(T8).update(A8).digest();
+  const out = new Uint8Array(dkLen);
+  let V = blake2b.create({}).update(T8).update(A8).digest();
+  let pos = 0;
+  out.set(V.subarray(0, 32));
+  pos += 32;
+  for (; dkLen - pos > 64; pos += 32) {
+    const Vh = blake2b.create({}).update(V);
+    Vh.digestInto(V);
+    Vh.destroy();
+    out.set(V.subarray(0, 32), pos);
+  }
+  out.set(blake2b(V, { dkLen: dkLen - pos }), pos);
+  clean(V, T);
+  return u32(out);
+}
+function indexAlpha(r, s, laneLen, segmentLen, index, randL, sameLane = false) {
+  let area;
+  if (r === 0) {
+    if (s === 0)
+      area = index - 1;
+    else if (sameLane)
+      area = s * segmentLen + index - 1;
+    else
+      area = s * segmentLen + (index == 0 ? -1 : 0);
+  } else if (sameLane)
+    area = laneLen - segmentLen + index - 1;
+  else
+    area = laneLen - segmentLen + (index == 0 ? -1 : 0);
+  const startPos = r !== 0 && s !== ARGON2_SYNC_POINTS - 1 ? (s + 1) * segmentLen : 0;
+  const rel = area - 1 - mul(area, mul(randL, randL).h).h;
+  return (startPos + rel) % laneLen;
+}
+var maxUint32 = Math.pow(2, 32);
+function isU32(num) {
+  return Number.isSafeInteger(num) && num >= 0 && num < maxUint32;
+}
+function argon2Opts(opts) {
+  const merged = {
+    version: 19,
+    dkLen: 32,
+    maxmem: maxUint32 - 1,
+    asyncTick: 10
+  };
+  for (let [k, v] of Object.entries(opts))
+    if (v != null)
+      merged[k] = v;
+  const { dkLen, p, m, t, version, onProgress } = merged;
+  if (!isU32(dkLen) || dkLen < 4)
+    throw new Error("dkLen should be at least 4 bytes");
+  if (!isU32(p) || p < 1 || p >= Math.pow(2, 24))
+    throw new Error("p should be 1 <= p < 2^24");
+  if (!isU32(m))
+    throw new Error("m should be 0 <= m < 2^32");
+  if (!isU32(t) || t < 1)
+    throw new Error("t (iterations) should be 1 <= t < 2^32");
+  if (onProgress !== void 0 && typeof onProgress !== "function")
+    throw new Error("progressCb should be function");
+  if (!isU32(m) || m < 8 * p)
+    throw new Error("memory should be at least 8*p bytes");
+  if (version !== 16 && version !== 19)
+    throw new Error("unknown version=" + version);
+  return merged;
+}
+function argon2Init(password, salt, type, opts) {
+  password = kdfInputToBytes(password);
+  salt = kdfInputToBytes(salt);
+  abytes(password);
+  abytes(salt);
+  if (!isU32(password.length))
+    throw new Error("password should be less than 4 GB");
+  if (!isU32(salt.length) || salt.length < 8)
+    throw new Error("salt should be at least 8 bytes and less than 4 GB");
+  if (!Object.values(AT).includes(type))
+    throw new Error("invalid type");
+  let { p, dkLen, m, t, version, key, personalization, maxmem, onProgress, asyncTick } = argon2Opts(opts);
+  key = abytesOrZero(key);
+  personalization = abytesOrZero(personalization);
+  const h = blake2b.create({});
+  const BUF = new Uint32Array(1);
+  const BUF8 = u8(BUF);
+  for (let item of [p, dkLen, m, t, version, type]) {
+    BUF[0] = item;
+    h.update(BUF8);
+  }
+  for (let i of [password, salt, key, personalization]) {
+    BUF[0] = i.length;
+    h.update(BUF8).update(i);
+  }
+  const H0 = new Uint32Array(18);
+  const H0_8 = u8(H0);
+  h.digestInto(H0_8);
+  const lanes = p;
+  const mP = 4 * p * Math.floor(m / (ARGON2_SYNC_POINTS * p));
+  const laneLen = Math.floor(mP / p);
+  const segmentLen = Math.floor(laneLen / ARGON2_SYNC_POINTS);
+  const memUsed = mP * 256;
+  if (!isU32(maxmem) || memUsed > maxmem)
+    throw new Error("mem should be less than 2**32, got: maxmem=" + maxmem + ", memused=" + memUsed);
+  const B = new Uint32Array(memUsed);
+  for (let l = 0; l < p; l++) {
+    const i = 256 * laneLen * l;
+    H0[17] = l;
+    H0[16] = 0;
+    B.set(Hp(H0, 1024), i);
+    H0[16] = 1;
+    B.set(Hp(H0, 1024), i + 256);
+  }
+  let perBlock = () => {
+  };
+  if (onProgress) {
+    const totalBlock = t * ARGON2_SYNC_POINTS * p * segmentLen;
+    const callbackPer = Math.max(Math.floor(totalBlock / 1e4), 1);
+    let blockCnt = 0;
+    perBlock = () => {
+      blockCnt++;
+      if (onProgress && (!(blockCnt % callbackPer) || blockCnt === totalBlock))
+        onProgress(blockCnt / totalBlock);
+    };
+  }
+  clean(BUF, H0);
+  return { type, mP, p, t, version, B, laneLen, lanes, segmentLen, dkLen, perBlock, asyncTick };
+}
+function argon2Output(B, p, laneLen, dkLen) {
+  const B_final = new Uint32Array(256);
+  for (let l = 0; l < p; l++)
+    for (let j = 0; j < 256; j++)
+      B_final[j] ^= B[256 * (laneLen * l + laneLen - 1) + j];
+  const res = u8(Hp(B_final, dkLen));
+  clean(B_final);
+  return res;
+}
+function processBlock(B, address, l, r, s, index, laneLen, segmentLen, lanes, offset, prev, dataIndependent, needXor) {
+  if (offset % laneLen)
+    prev = offset - 1;
+  let randL, randH;
+  if (dataIndependent) {
+    let i128 = index % 128;
+    if (i128 === 0) {
+      address[256 + 12]++;
+      block(address, 256, 2 * 256, 0, false);
+      block(address, 0, 2 * 256, 0, false);
+    }
+    randL = address[2 * i128];
+    randH = address[2 * i128 + 1];
+  } else {
+    const T = 256 * prev;
+    randL = B[T];
+    randH = B[T + 1];
+  }
+  const refLane = r === 0 && s === 0 ? l : randH % lanes;
+  const refPos = indexAlpha(r, s, laneLen, segmentLen, index, randL, refLane == l);
+  const refBlock = laneLen * refLane + refPos;
+  block(B, 256 * prev, 256 * refBlock, offset * 256, needXor);
+}
+function argon2(type, password, salt, opts) {
+  const { mP, p, t, version, B, laneLen, lanes, segmentLen, dkLen, perBlock } = argon2Init(password, salt, type, opts);
+  const address = new Uint32Array(3 * 256);
+  address[256 + 6] = mP;
+  address[256 + 8] = t;
+  address[256 + 10] = type;
+  for (let r = 0; r < t; r++) {
+    const needXor = r !== 0 && version === 19;
+    address[256 + 0] = r;
+    for (let s = 0; s < ARGON2_SYNC_POINTS; s++) {
+      address[256 + 4] = s;
+      const dataIndependent = type == AT.Argon2i || type == AT.Argon2id && r === 0 && s < 2;
+      for (let l = 0; l < p; l++) {
+        address[256 + 2] = l;
+        address[256 + 12] = 0;
+        let startPos = 0;
+        if (r === 0 && s === 0) {
+          startPos = 2;
+          if (dataIndependent) {
+            address[256 + 12]++;
+            block(address, 256, 2 * 256, 0, false);
+            block(address, 0, 2 * 256, 0, false);
+          }
+        }
+        let offset = l * laneLen + s * segmentLen + startPos;
+        let prev = offset % laneLen ? offset - 1 : offset + laneLen - 1;
+        for (let index = startPos; index < segmentLen; index++, offset++, prev++) {
+          perBlock();
+          processBlock(B, address, l, r, s, index, laneLen, segmentLen, lanes, offset, prev, dataIndependent, needXor);
+        }
+      }
+    }
+  }
+  clean(address);
+  return argon2Output(B, p, laneLen, dkLen);
+}
+var argon2id = (password, salt, opts) => argon2(AT.Argon2id, password, salt, opts);
+
 // node_modules/@noble/ciphers/esm/_assert.js
 function number(n) {
   if (!Number.isSafeInteger(n) || n < 0)
@@ -978,11 +973,11 @@ function bool(b) {
   if (typeof b !== "boolean")
     throw new Error(`boolean expected, not ${b}`);
 }
-function isBytes(a) {
+function isBytes2(a) {
   return a instanceof Uint8Array || a != null && typeof a === "object" && a.constructor.name === "Uint8Array";
 }
 function bytes(b, ...lengths) {
-  if (!isBytes(b))
+  if (!isBytes2(b))
     throw new Error("Uint8Array expected");
   if (lengths.length > 0 && !lengths.includes(b.length))
     throw new Error(`Uint8Array expected of length ${lengths}, not of length=${b.length}`);
@@ -1002,21 +997,21 @@ function output(out, instance) {
 }
 
 // node_modules/@noble/ciphers/esm/utils.js
-var u32 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+var u322 = (arr) => new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
 var createView = (arr) => new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
-var isLE = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
-if (!isLE)
+var isLE2 = new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
+if (!isLE2)
   throw new Error("Non little-endian hardware is not supported");
-function utf8ToBytes(str) {
+function utf8ToBytes2(str) {
   if (typeof str !== "string")
     throw new Error(`string expected, got ${typeof str}`);
   return new Uint8Array(new TextEncoder().encode(str));
 }
-function toBytes(data) {
+function toBytes2(data) {
   if (typeof data === "string")
-    data = utf8ToBytes(data);
-  else if (isBytes(data))
-    data = data.slice();
+    data = utf8ToBytes2(data);
+  else if (isBytes2(data))
+    data = copyBytes(data);
   else
     throw new Error(`Uint8Array expected, got ${typeof data}`);
   return data;
@@ -1039,17 +1034,132 @@ var wrapCipher = /* @__NO_SIDE_EFFECTS__ */ (params, c) => {
   Object.assign(c, params);
   return c;
 };
-function setBigUint64(view, byteOffset, value, isLE2) {
+function setBigUint64(view, byteOffset, value, isLE3) {
   if (typeof view.setBigUint64 === "function")
-    return view.setBigUint64(byteOffset, value, isLE2);
-  const _32n = BigInt(32);
+    return view.setBigUint64(byteOffset, value, isLE3);
+  const _32n2 = BigInt(32);
   const _u32_max = BigInt(4294967295);
-  const wh = Number(value >> _32n & _u32_max);
+  const wh = Number(value >> _32n2 & _u32_max);
   const wl = Number(value & _u32_max);
-  const h = isLE2 ? 4 : 0;
-  const l = isLE2 ? 0 : 4;
-  view.setUint32(byteOffset + h, wh, isLE2);
-  view.setUint32(byteOffset + l, wl, isLE2);
+  const h = isLE3 ? 4 : 0;
+  const l = isLE3 ? 0 : 4;
+  view.setUint32(byteOffset + h, wh, isLE3);
+  view.setUint32(byteOffset + l, wl, isLE3);
+}
+function copyBytes(bytes2) {
+  return Uint8Array.from(bytes2);
+}
+function clean2(...arrays) {
+  for (let i = 0; i < arrays.length; i++) {
+    arrays[i].fill(0);
+  }
+}
+
+// node_modules/@noble/ciphers/esm/_arx.js
+var _utf8ToBytes = (str) => Uint8Array.from(str.split("").map((c) => c.charCodeAt(0)));
+var sigma16 = _utf8ToBytes("expand 16-byte k");
+var sigma32 = _utf8ToBytes("expand 32-byte k");
+var sigma16_32 = u322(sigma16);
+var sigma32_32 = u322(sigma32);
+var sigma = sigma32_32.slice();
+function rotl(a, b) {
+  return a << b | a >>> 32 - b;
+}
+function isAligned32(b) {
+  return b.byteOffset % 4 === 0;
+}
+var BLOCK_LEN = 64;
+var BLOCK_LEN32 = 16;
+var MAX_COUNTER = 2 ** 32 - 1;
+var U32_EMPTY = new Uint32Array();
+function runCipher(core, sigma2, key, nonce, data, output2, counter, rounds) {
+  const len = data.length;
+  const block2 = new Uint8Array(BLOCK_LEN);
+  const b32 = u322(block2);
+  const isAligned = isAligned32(data) && isAligned32(output2);
+  const d32 = isAligned ? u322(data) : U32_EMPTY;
+  const o32 = isAligned ? u322(output2) : U32_EMPTY;
+  for (let pos = 0; pos < len; counter++) {
+    core(sigma2, key, nonce, b32, counter, rounds);
+    if (counter >= MAX_COUNTER)
+      throw new Error("arx: counter overflow");
+    const take = Math.min(BLOCK_LEN, len - pos);
+    if (isAligned && take === BLOCK_LEN) {
+      const pos32 = pos / 4;
+      if (pos % 4 !== 0)
+        throw new Error("arx: invalid block position");
+      for (let j = 0, posj; j < BLOCK_LEN32; j++) {
+        posj = pos32 + j;
+        o32[posj] = d32[posj] ^ b32[j];
+      }
+      pos += BLOCK_LEN;
+      continue;
+    }
+    for (let j = 0, posj; j < take; j++) {
+      posj = pos + j;
+      output2[posj] = data[posj] ^ block2[j];
+    }
+    pos += take;
+  }
+}
+function createCipher(core, opts) {
+  const { allowShortKeys, extendNonceFn, counterLength, counterRight, rounds } = checkOpts({ allowShortKeys: false, counterLength: 8, counterRight: false, rounds: 20 }, opts);
+  if (typeof core !== "function")
+    throw new Error("core must be a function");
+  number(counterLength);
+  number(rounds);
+  bool(counterRight);
+  bool(allowShortKeys);
+  return (key, nonce, data, output2, counter = 0) => {
+    bytes(key);
+    bytes(nonce);
+    bytes(data);
+    const len = data.length;
+    if (output2 === void 0)
+      output2 = new Uint8Array(len);
+    bytes(output2);
+    number(counter);
+    if (counter < 0 || counter >= MAX_COUNTER)
+      throw new Error("arx: counter overflow");
+    if (output2.length < len)
+      throw new Error(`arx: output (${output2.length}) is shorter than data (${len})`);
+    const toClean = [];
+    let l = key.length, k, sigma2;
+    if (l === 32) {
+      toClean.push(k = copyBytes(key));
+      sigma2 = sigma32_32;
+    } else if (l === 16 && allowShortKeys) {
+      k = new Uint8Array(32);
+      k.set(key);
+      k.set(key, 16);
+      sigma2 = sigma16_32;
+      toClean.push(k);
+    } else {
+      throw new Error(`arx: invalid 32-byte key, got length=${l}`);
+    }
+    if (!isAligned32(nonce))
+      toClean.push(nonce = copyBytes(nonce));
+    const k32 = u322(k);
+    if (extendNonceFn) {
+      if (nonce.length !== 24)
+        throw new Error(`arx: extended nonce must be 24 bytes`);
+      extendNonceFn(sigma2, k32, u322(nonce.subarray(0, 16)), k32);
+      nonce = nonce.subarray(16);
+    }
+    const nonceNcLen = 16 - counterLength;
+    if (nonceNcLen !== nonce.length)
+      throw new Error(`arx: nonce must be ${nonceNcLen} or 16 bytes`);
+    if (nonceNcLen !== 12) {
+      const nc = new Uint8Array(12);
+      nc.set(nonce, counterRight ? 0 : 12 - nonce.length);
+      nonce = nc;
+      toClean.push(nonce);
+    }
+    const n32 = u322(nonce);
+    runCipher(core, sigma2, k32, n32, data, output2, counter, rounds);
+    clean2(...toClean);
+    return output2;
+  };
 }
 
 // node_modules/@noble/ciphers/esm/_poly1305.js
@@ -1064,7 +1174,7 @@ var Poly1305 = class {
     this.pad = new Uint16Array(8);
     this.pos = 0;
     this.finished = false;
-    key = toBytes(key);
+    key = toBytes2(key);
     bytes(key, 32);
     const t0 = u8to16(key, 0);
     const t1 = u8to16(key, 2);
@@ -1241,11 +1351,12 @@ var Poly1305 = class {
       f = (h[i] + pad[i] | 0) + (f >>> 16) | 0;
       h[i] = f & 65535;
     }
+    clean2(g);
   }
   update(data) {
     exists(this);
     const { buffer, blockLen } = this;
-    data = toBytes(data);
+    data = toBytes2(data);
     const len = data.length;
     for (let pos = 0; pos < len; ) {
       const take = Math.min(blockLen - this.pos, len - pos);
@@ -1265,10 +1376,7 @@ var Poly1305 = class {
     return this;
   }
   destroy() {
-    this.h.fill(0);
-    this.r.fill(0);
-    this.buffer.fill(0);
-    this.pad.fill(0);
+    clean2(this.h, this.r, this.buffer, this.pad);
   }
   digestInto(out) {
     exists(this);
@@ -1299,7 +1407,7 @@ var Poly1305 = class {
   }
 };
 function wrapConstructorWithKey(hashCons) {
-  const hashC = (msg, key) => hashCons(key).update(toBytes(msg)).digest();
+  const hashC = (msg, key) => hashCons(key).update(toBytes2(msg)).digest();
   const tmp = hashCons(new Uint8Array(32));
   hashC.outputLen = tmp.outputLen;
   hashC.blockLen = tmp.blockLen;
@@ -1307,117 +1415,6 @@ function wrapConstructorWithKey(hashCons) {
   return hashC;
 }
 var poly1305 = wrapConstructorWithKey((key) => new Poly1305(key));
-
-// node_modules/@noble/ciphers/esm/_arx.js
-var _utf8ToBytes = (str) => Uint8Array.from(str.split("").map((c) => c.charCodeAt(0)));
-var sigma16 = _utf8ToBytes("expand 16-byte k");
-var sigma32 = _utf8ToBytes("expand 32-byte k");
-var sigma16_32 = u32(sigma16);
-var sigma32_32 = u32(sigma32);
-var sigma = sigma32_32.slice();
-function rotl(a, b) {
-  return a << b | a >>> 32 - b;
-}
-function isAligned32(b) {
-  return b.byteOffset % 4 === 0;
-}
-var BLOCK_LEN = 64;
-var BLOCK_LEN32 = 16;
-var MAX_COUNTER = 2 ** 32 - 1;
-var U32_EMPTY = new Uint32Array();
-function runCipher(core, sigma2, key, nonce, data, output2, counter, rounds) {
-  const len = data.length;
-  const block = new Uint8Array(BLOCK_LEN);
-  const b32 = u32(block);
-  const isAligned = isAligned32(data) && isAligned32(output2);
-  const d32 = isAligned ? u32(data) : U32_EMPTY;
-  const o32 = isAligned ? u32(output2) : U32_EMPTY;
-  for (let pos = 0; pos < len; counter++) {
-    core(sigma2, key, nonce, b32, counter, rounds);
-    if (counter >= MAX_COUNTER)
-      throw new Error("arx: counter overflow");
-    const take = Math.min(BLOCK_LEN, len - pos);
-    if (isAligned && take === BLOCK_LEN) {
-      const pos32 = pos / 4;
-      if (pos % 4 !== 0)
-        throw new Error("arx: invalid block position");
-      for (let j = 0, posj; j < BLOCK_LEN32; j++) {
-        posj = pos32 + j;
-        o32[posj] = d32[posj] ^ b32[j];
-      }
-      pos += BLOCK_LEN;
-      continue;
-    }
-    for (let j = 0, posj; j < take; j++) {
-      posj = pos + j;
-      output2[posj] = data[posj] ^ block[j];
-    }
-    pos += take;
-  }
-}
-function createCipher(core, opts) {
-  const { allowShortKeys, extendNonceFn, counterLength, counterRight, rounds } = checkOpts({ allowShortKeys: false, counterLength: 8, counterRight: false, rounds: 20 }, opts);
-  if (typeof core !== "function")
-    throw new Error("core must be a function");
-  number(counterLength);
-  number(rounds);
-  bool(counterRight);
-  bool(allowShortKeys);
-  return (key, nonce, data, output2, counter = 0) => {
-    bytes(key);
-    bytes(nonce);
-    bytes(data);
-    const len = data.length;
-    if (!output2)
-      output2 = new Uint8Array(len);
-    bytes(output2);
-    number(counter);
-    if (counter < 0 || counter >= MAX_COUNTER)
-      throw new Error("arx: counter overflow");
-    if (output2.length < len)
-      throw new Error(`arx: output (${output2.length}) is shorter than data (${len})`);
-    const toClean = [];
-    let l = key.length, k, sigma2;
-    if (l === 32) {
-      k = key.slice();
-      toClean.push(k);
-      sigma2 = sigma32_32;
-    } else if (l === 16 && allowShortKeys) {
-      k = new Uint8Array(32);
-      k.set(key);
-      k.set(key, 16);
-      sigma2 = sigma16_32;
-      toClean.push(k);
-    } else {
-      throw new Error(`arx: invalid 32-byte key, got length=${l}`);
-    }
-    if (!isAligned32(nonce)) {
-      nonce = nonce.slice();
-      toClean.push(nonce);
-    }
-    const k32 = u32(k);
-    if (extendNonceFn) {
-      if (nonce.length !== 24)
-        throw new Error(`arx: extended nonce must be 24 bytes`);
-      extendNonceFn(sigma2, k32, u32(nonce.subarray(0, 16)), k32);
-      nonce = nonce.subarray(16);
-    }
-    const nonceNcLen = 16 - counterLength;
-    if (nonceNcLen !== nonce.length)
-      throw new Error(`arx: nonce must be ${nonceNcLen} or 16 bytes`);
-    if (nonceNcLen !== 12) {
-      const nc = new Uint8Array(12);
-      nc.set(nonce, counterRight ? 0 : 12 - nonce.length);
-      nonce = nc;
-      toClean.push(nonce);
-    }
-    const n32 = u32(nonce);
-    runCipher(core, sigma2, k32, n32, data, output2, counter, rounds);
-    while (toClean.length > 0)
-      toClean.pop().fill(0);
-    return output2;
-  };
-}
 
 // node_modules/@noble/ciphers/esm/chacha.js
 function chachaCore(s, k, n, out, cnt, rounds = 20) {
@@ -1616,7 +1613,7 @@ function computeTag(fn, key, nonce, data, AAD) {
   setBigUint64(view, 8, BigInt(data.length), true);
   h.update(num);
   const res = h.digest();
-  authKey.fill(0);
+  clean2(authKey, num);
   return res;
 }
 var _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
@@ -1624,7 +1621,7 @@ var _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
   bytes(key, 32);
   bytes(nonce);
   return {
-    encrypt: (plaintext, output2) => {
+    encrypt(plaintext, output2) {
       const plength = plaintext.length;
       const clength = plength + tagLength;
       if (output2) {
@@ -1635,9 +1632,10 @@ var _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
       xorStream(key, nonce, plaintext, output2, 1);
       const tag = computeTag(xorStream, key, nonce, output2.subarray(0, -tagLength), AAD);
       output2.set(tag, plength);
+      clean2(tag);
       return output2;
     },
-    decrypt: (ciphertext, output2) => {
+    decrypt(ciphertext, output2) {
       const clength = ciphertext.length;
       const plength = clength - tagLength;
       if (clength < tagLength)
@@ -1653,6 +1651,7 @@ var _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
       if (!equalBytes(passedTag, tag))
         throw new Error("invalid tag");
       xorStream(key, nonce, data, output2, 1);
+      clean2(tag);
       return output2;
     }
   };
@@ -1661,24 +1660,21 @@ var chacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 
 var xchacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 24, tagLength: 16 }, _poly1305_aead(xchacha20));
 
 // src/crypto.js
-var ARGON2_MEM = 128 * 1024;
+var ARGON2_MEM = 64 * 1024;
 var ARGON2_TIME = 3;
 var ARGON2_PARALLELISM = 1;
 var ARGON2_KEY_LEN = 32;
 var SALT_LEN = 16;
 var NONCE_LEN = 12;
 var KEY_LEN = 32;
-async function deriveKey(password, salt) {
-  const result = await (0, import_argon2_browser.hash)({
-    pass: password,
-    salt,
-    time: ARGON2_TIME,
-    mem: ARGON2_MEM,
-    parallelism: ARGON2_PARALLELISM,
-    hashLen: ARGON2_KEY_LEN,
-    type: import_argon2_browser.ArgonType.Argon2id
+function deriveKey(password, salt) {
+  const pwBytes = new TextEncoder().encode(password);
+  return argon2id(pwBytes, salt, {
+    m: ARGON2_MEM,
+    t: ARGON2_TIME,
+    p: ARGON2_PARALLELISM,
+    dkLen: ARGON2_KEY_LEN
   });
-  return result.hash;
 }
 function generateVaultKey() {
   return randomBytes(KEY_LEN);
@@ -1696,36 +1692,44 @@ function decryptBytes(key, blob) {
   const ciphertext = blob.slice(NONCE_LEN);
   return chacha20poly1305(key, nonce).decrypt(ciphertext);
 }
-async function createKeyBlob(password, vaultKey) {
-  const salt = randomBytes(SALT_LEN);
-  const derivedKey = await deriveKey(password, salt);
-  const encrypted = encryptBytes(derivedKey, vaultKey);
-  return JSON.stringify({
-    v: 1,
-    salt: toHex(salt),
-    encryptedKey: toHex(encrypted)
+function createKeyBlob(password, vaultKey) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        const salt = randomBytes(SALT_LEN);
+        const derivedKey = deriveKey(password, salt);
+        const encrypted = encryptBytes(derivedKey, vaultKey);
+        resolve(JSON.stringify({ v: 1, salt: toHex(salt), encryptedKey: toHex(encrypted) }));
+      } catch (e) {
+        reject(e);
+      }
+    }, 20);
   });
 }
-async function unlockKeyBlob(password, blobJson) {
-  const blob = JSON.parse(blobJson);
-  if (blob.v !== 1)
-    throw new Error("Unsupported key blob version");
-  if (typeof blob.salt !== "string" || blob.salt.length !== SALT_LEN * 2)
-    throw new Error("Key blob: invalid or missing salt");
-  if (typeof blob.encryptedKey !== "string" || blob.encryptedKey.length < NONCE_LEN * 2)
-    throw new Error("Key blob: invalid or missing encryptedKey");
-  const salt = fromHex(blob.salt);
-  const encryptedKey = fromHex(blob.encryptedKey);
-  const derivedKey = await deriveKey(password, salt);
-  return decryptBytes(derivedKey, encryptedKey);
+function unlockKeyBlob(password, blobJson) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      try {
+        const blob = JSON.parse(blobJson);
+        if (blob.v !== 1)
+          throw new Error("Unsupported key blob version");
+        if (typeof blob.salt !== "string" || blob.salt.length !== SALT_LEN * 2)
+          throw new Error("Key blob: invalid salt");
+        if (typeof blob.encryptedKey !== "string" || blob.encryptedKey.length < NONCE_LEN * 2)
+          throw new Error("Key blob: invalid encryptedKey");
+        const derivedKey = deriveKey(password, fromHex(blob.salt));
+        resolve(decryptBytes(derivedKey, fromHex(blob.encryptedKey)));
+      } catch (e) {
+        reject(e);
+      }
+    }, 20);
+  });
 }
 function encryptNote(vaultKey, plaintext) {
-  const ptBytes = new TextEncoder().encode(plaintext);
-  return toBase64(encryptBytes(vaultKey, ptBytes));
+  return toBase64(encryptBytes(vaultKey, new TextEncoder().encode(plaintext)));
 }
 function decryptNote(vaultKey, ciphertextB64) {
-  const ptBytes = decryptBytes(vaultKey, fromBase64(ciphertextB64));
-  return new TextDecoder().decode(ptBytes);
+  return new TextDecoder().decode(decryptBytes(vaultKey, fromBase64(ciphertextB64)));
 }
 function toHex(bytes2) {
   return Array.from(bytes2).map((b) => b.toString(16).padStart(2, "0")).join("");

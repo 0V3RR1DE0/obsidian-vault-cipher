@@ -32,27 +32,20 @@ const config = {
   sourcemap: prod ? false : "inline",
   treeShaking: true,
   outfile: outFile,
-  // argon2-browser ships a WASM binary — bundle it as a file asset.
-  // assetNames keeps the filename predictable (argon2 looks for it by name).
-  loader: { ".wasm": "file" },
-  assetNames: "[name]",
-  publicPath: "",
+  // No WASM loader needed — @noble/hashes argon2id is pure JS
 };
 
 if (prod) {
-  // Ensure dist/ exists
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
 
   esbuild.build(config).then(() => {
-    // Copy the other files Obsidian needs alongside main.js
     for (const file of ["manifest.json", "styles.css"]) {
       fs.copyFileSync(file, path.join(outDir, file));
     }
     console.log(`\n✅ Built to ${outDir}/`);
-    console.log(`   Copy the contents of ${outDir}/ to .obsidian/plugins/vault-cipher/`);
+    console.log(`   Copy ${outDir}/ to .obsidian/plugins/vault-cipher/`);
   }).catch(() => process.exit(1));
 } else {
-  // Dev: output main.js to root (where Obsidian symlink expects it)
   esbuild.context(config).then(ctx => {
     ctx.watch();
     console.log("Watching for changes… (output → main.js in root)");
