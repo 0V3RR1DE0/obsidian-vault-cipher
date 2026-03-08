@@ -1,73 +1,46 @@
 /**
- * main.js  (src/main.js — bundled by esbuild into root main.js)
- * Vault Cipher — Obsidian plugin entry point.
+ * main.js — plugin entry.
  *
- * Encryption stack:
- *   Argon2id  →  derive key from password → unwrap vault key
- *   ChaCha20-Poly1305  →  encrypt vault key (key blob) + all notes
- *
- * Key storage:
- *   .vault-key  in vault root (syncs via LiveSync, hidden from file explorer)
- *
- * Session model:
- *   Password entered once on vault open → vault key held in memory →
- *   cleared on plugin unload / manual lock.
+ * Updated to use async crypto helpers and to provide password-change/export/import UX.
  */
 
 import { Plugin, TFile, Notice } from "obsidian";
 import { generateVaultKey, createKeyBlob, unlockKeyBlob, encryptNote, decryptNote } from "./crypto.js";
-import { UnlockModal, SetupModal } from "./modals.js";
+import { UnlockModal, SetupModal, ChangePasswordModal, ImportKeyModal } from "./modals.js";
 import { VaultCipherSettingsTab, DEFAULT_SETTINGS } from "./settings.js";
 
 const KEY_BLOB_FILENAME = ".vault-key";
-// Marker prepended to encrypted note content so we can detect it
 const CIPHER_MARKER = "vault-cipher:v1:";
 
 export default class VaultCipherPlugin extends Plugin {
-  /** @type {Uint8Array | null} The vault key, held in memory for the session. */
   sessionKey = null;
-
-  /** Tracks files currently being written by us so the patch doesn't double-encrypt them. */
   _writingFiles = new Set();
 
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new VaultCipherSettingsTab(this.app, this));
 
-    // Hide key blob whenever it gets created (e.g. first setup)
-    this.registerEvent(
-      this.app.vault.on("create", (file) => this.maybeHideFile(file))
-    );
+    this.registerEvent(this.app.vault.on("create", (file) => this.maybeHideFile(file)));
 
-    // On workspace ready: hide key blob and handle unlock/setup
     this.app.workspace.onLayoutReady(async () => {
       this.hideKeyBlobFromExplorer();
-      // Always call promptUnlock — it figures out whether to show
-      // setup (no key blob) or unlock (key blob exists) or nothing (already unlocked)
+      // Wait briefly for sync to land remote files before deciding to show Setup.
+      // This reduces race conditions when a synced .vault-key arrives shortly after opening.
       await this.promptUnlock();
     });
 
-    // Patch file open to transparently decrypt content into the editor
-    // Also warns if a plaintext note is detected in an encrypted vault
-    this.registerEvent(
-      this.app.workspace.on("file-open", async (file) => {
-        if (!file || !this.settings.enabled) return;
-        await this.decryptFileIntoEditor(file);
-        this.resetAutoLockTimer();
-      })
-    );
+    this.registerEvent(this.app.workspace.on("file-open", async (file) => {
+      if (!file || !this.settings.enabled) return;
+      await this.decryptFileIntoEditor(file);
+      this.resetAutoLockTimer();
+    }));
 
-    // Reset auto-lock on any editor keystroke so active typing doesn't lock the vault
-    this.registerEvent(
-      this.app.workspace.on("editor-change", () => {
-        if (this.sessionKey) this.resetAutoLockTimer();
-      })
-    );
+    this.registerEvent(this.app.workspace.on("editor-change", () => {
+      if (this.sessionKey) this.resetAutoLockTimer();
+    }));
 
-    // Monkey-patch vault.modify to encrypt before writing
     this.patchVaultModify();
 
-    // Command: lock vault
     this.addCommand({
       id: "lock-vault",
       name: "Lock vault",
@@ -77,14 +50,12 @@ export default class VaultCipherPlugin extends Plugin {
       },
     });
 
-    // Command: unlock vault
     this.addCommand({
       id: "unlock-vault",
       name: "Unlock vault",
       callback: () => this.promptUnlock(),
     });
 
-    // Command: encrypt all existing plaintext notes
     this.addCommand({
       id: "encrypt-all-notes",
       name: "Encrypt all existing notes",
@@ -100,26 +71,16 @@ export default class VaultCipherPlugin extends Plugin {
     console.log("Vault Cipher unloaded — session key cleared.");
   }
 
-  // ── Settings ───────────────────────────────────────────────────────────────
-
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
-
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
-
-  // ── Session key management ─────────────────────────────────────────────────
+  async saveSettings() { await this.saveData(this.settings); }
 
   lockVault() {
-    // Zero out the key bytes before nulling — best-effort in JS userland
     if (this.sessionKey) this.sessionKey.fill(0);
     this.sessionKey = null;
     this.clearAutoLockTimer();
   }
-
-  // ── Auto-lock timer ────────────────────────────────────────────────────────
 
   resetAutoLockTimer() {
     if (!this.settings.autoLockMinutes || this.settings.autoLockMinutes <= 0) return;
@@ -129,7 +90,6 @@ export default class VaultCipherPlugin extends Plugin {
       new Notice("🔒 Vault Cipher: auto-locked after inactivity.");
     }, this.settings.autoLockMinutes * 60 * 1000);
   }
-
   clearAutoLockTimer() {
     if (this._autoLockTimer) {
       clearTimeout(this._autoLockTimer);
@@ -137,20 +97,28 @@ export default class VaultCipherPlugin extends Plugin {
     }
   }
 
+  async waitForRemoteKey(ms = 3000, interval = 300) {
+    const start = Date.now();
+    while (Date.now() - start < ms) {
+      if (await this.keyBlobExists()) return true;
+      await new Promise(r => setTimeout(r, interval));
+    }
+    return false;
+  }
+
   async promptUnlock() {
-    // Already unlocked this session — nothing to do
     if (this.sessionKey) return;
+
+    // If a remote .vault-key might land shortly, wait a short moment to avoid spuriously creating a new key.
+    const sawRemote = await this.waitForRemoteKey(1500, 250);
 
     const keyBlobExists = await this.keyBlobExists();
 
-    if (!keyBlobExists) {
-      // First launch — no key blob yet, run setup wizard
-      // Pass plugin instance so SetupModal can switch to unlock flow if a key appears
+    if (!keyBlobExists && !sawRemote) {
       new SetupModal(this.app, this, async (password) => {
         await this.setupEncryption(password);
       }).open();
     } else {
-      // Returning session — unlock with password
       new UnlockModal(this.app, async (password) => {
         return await this.unlockWithPassword(password);
       }).open();
@@ -160,19 +128,16 @@ export default class VaultCipherPlugin extends Plugin {
   async unlockWithPassword(password) {
     try {
       const blobJson = await this.readKeyBlob();
-      this.sessionKey = unlockKeyBlob(password, blobJson);
+      this.sessionKey = await unlockKeyBlob(password, blobJson);
       return true;
     } catch (e) {
-      // Decryption failure = wrong password or corrupt blob
       return false;
     }
   }
 
-  // ── First-time setup ───────────────────────────────────────────────────────
-
   async setupEncryption(password) {
     const vaultKey = generateVaultKey();
-    const blob     = createKeyBlob(password, vaultKey);
+    const blob = await createKeyBlob(password, vaultKey);
     await this.writeKeyBlob(blob);
     this.sessionKey = vaultKey;
     this.settings.enabled = true;
@@ -180,7 +145,30 @@ export default class VaultCipherPlugin extends Plugin {
     this.hideKeyBlobFromExplorer();
   }
 
-  // ── Key blob I/O ───────────────────────────────────────────────────────────
+  // Change password: re-wrap in-place using sessionKey (must be unlocked)
+  async changePassword(currentPasswordOrNull, newPassword) {
+    // If unlocked, use sessionKey directly
+    if (this.sessionKey) {
+      const newBlob = await createKeyBlob(newPassword, this.sessionKey);
+      await this.writeKeyBlob(newBlob);
+      new Notice("✅ Password changed.");
+      return true;
+    }
+    // If locked and currentPassword provided, try unlock then rewrap
+    if (currentPasswordOrNull) {
+      const ok = await this.unlockWithPassword(currentPasswordOrNull);
+      if (!ok) return false;
+      try {
+        const newBlob = await createKeyBlob(newPassword, this.sessionKey);
+        await this.writeKeyBlob(newBlob);
+        new Notice("✅ Password changed.");
+        return true;
+      } finally {
+        // keep session unlocked (user might expect to remain unlocked after changing)
+      }
+    }
+    return false;
+  }
 
   async keyBlobExists() {
     return this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME) instanceof TFile;
@@ -193,26 +181,36 @@ export default class VaultCipherPlugin extends Plugin {
   }
 
   async writeKeyBlob(content) {
+    // Prefer to use the original modify/create functions to avoid double-encryption.
     const existing = this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME);
-    if (existing instanceof TFile) {
-      // Use _originalModify directly — the key blob is already encrypted JSON,
-      // we must not let the vault.modify patch try to encrypt it again as a note.
-      const writeFn = this._originalModify || this.app.vault.modify.bind(this.app.vault);
-      await writeFn(existing, content);
-    } else {
-      await this.app.vault.create(KEY_BLOB_FILENAME, content);
+    try {
+      if (existing instanceof TFile) {
+        const writeFn = this._originalModify || this.app.vault.modify.bind(this.app.vault);
+        await writeFn(existing, content);
+      } else {
+        await this.app.vault.create(KEY_BLOB_FILENAME, content);
+      }
+    } catch (e) {
+      // Fallback to adapter write if available (attempt atomic write)
+      try {
+        const adapter = this.app.vault.adapter;
+        if (adapter && adapter.write) {
+          await adapter.write(KEY_BLOB_FILENAME, content);
+        } else {
+          throw e;
+        }
+      } catch (err) {
+        console.error("Failed to write key blob:", err);
+        throw err;
+      }
     }
   }
 
-  // ── Hide key blob from file explorer ──────────────────────────────────────
-
   hideKeyBlobFromExplorer() {
-    // Inject a CSS rule to hide the key blob file item
     const styleId = "vault-cipher-hide-keyblob";
     if (!document.getElementById(styleId)) {
       const style = document.createElement("style");
       style.id = styleId;
-      // The file explorer renders nav-file-title with data-path attribute
       style.textContent = `
         .nav-file[data-path="${KEY_BLOB_FILENAME}"],
         .nav-file-title[data-path="${KEY_BLOB_FILENAME}"] {
@@ -224,16 +222,9 @@ export default class VaultCipherPlugin extends Plugin {
   }
 
   maybeHideFile(file) {
-    if (file.path === KEY_BLOB_FILENAME) {
-      this.hideKeyBlobFromExplorer();
-    }
+    if (file.path === KEY_BLOB_FILENAME) this.hideKeyBlobFromExplorer();
   }
 
-  // ── Note encryption / decryption ───────────────────────────────────────────
-
-  /**
-   * Returns true if a note's content is encrypted by this plugin.
-   */
   isEncrypted(content) {
     return typeof content === "string" && content.startsWith(CIPHER_MARKER);
   }
@@ -245,29 +236,18 @@ export default class VaultCipherPlugin extends Plugin {
     );
   }
 
-  /**
-   * Encrypt the plaintext content of a note.
-   * Returns the ciphertext string (with marker prefix).
-   */
   async encrypt(plaintext) {
     if (!this.sessionKey) throw new Error("Vault is locked");
     const ciphertext = encryptNote(this.sessionKey, plaintext);
     return CIPHER_MARKER + ciphertext;
   }
 
-  /**
-   * Decrypt the ciphertext content of a note.
-   */
   async decrypt(ciphertext) {
     if (!this.sessionKey) throw new Error("Vault is locked");
     const payload = ciphertext.slice(CIPHER_MARKER.length);
     return decryptNote(this.sessionKey, payload);
   }
 
-  /**
-   * When a file is opened, if it's encrypted and we're unlocked,
-   * read the encrypted content, decrypt it, and replace the editor content.
-   */
   async decryptFileIntoEditor(file) {
     if (!(file instanceof TFile)) return;
     if (file.extension !== "md") return;
@@ -289,9 +269,6 @@ export default class VaultCipherPlugin extends Plugin {
 
     try {
       const plaintext = await this.decrypt(raw);
-
-      // Guard: make sure this file is still the active one after the async decrypt.
-      // If the user switched notes during decryption, bail — don't overwrite the wrong editor.
       const activeFile = this.app.workspace.getActiveFile();
       if (!activeFile || activeFile.path !== file.path) return;
 
@@ -310,14 +287,8 @@ export default class VaultCipherPlugin extends Plugin {
     }
   }
 
-  /**
-   * Monkey-patch vault.modify so that any write to an .md file goes through
-   * encryption first (unless we're in the middle of decrypting into the editor).
-   */
   patchVaultModify() {
     const _originalModify = this.app.vault.modify.bind(this.app.vault);
-
-    // Stash so writeKeyBlob can call it directly, bypassing encryption
     this._originalModify = _originalModify;
 
     this.app.vault.modify = async (file, data, options) => {
@@ -335,7 +306,6 @@ export default class VaultCipherPlugin extends Plugin {
         } catch (e) {
           console.error("Vault Cipher: failed to encrypt on save:", e);
           new Notice("⚠️ Vault Cipher: encryption failed — note NOT saved to prevent plaintext leak.");
-          // Return without saving rather than silently saving plaintext
           return;
         }
       }
@@ -347,12 +317,6 @@ export default class VaultCipherPlugin extends Plugin {
     });
   }
 
-  // ── Bulk operations ────────────────────────────────────────────────────────
-
-  /**
-   * Encrypt all existing plaintext .md files in the vault.
-   * Useful on first setup to encrypt notes you already have.
-   */
   async encryptAllNotes() {
     if (!this.sessionKey) {
       new Notice("Unlock the vault first.");
