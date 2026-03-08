@@ -32,18 +32,12 @@ const config = {
   sourcemap: prod ? false : "inline",
   treeShaking: true,
   outfile: outFile,
-  // No WASM loader needed — @noble/hashes argon2id is pure JS
 };
 
 if (prod) {
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
-
   esbuild.build(config).then(() => {
-    for (const file of ["manifest.json", "styles.css"]) {
-      fs.copyFileSync(file, path.join(outDir, file));
-    }
     console.log(`\n✅ Built to ${outDir}/`);
-    console.log(`   Copy ${outDir}/ to .obsidian/plugins/vault-cipher/`);
   }).catch(() => process.exit(1));
 } else {
   esbuild.context(config).then(ctx => {
