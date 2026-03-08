@@ -177,7 +177,11 @@ export default class VaultCipherPlugin extends Plugin {
   }
 
   async keyBlobExists() {
-    return this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME) instanceof TFile;
+    try {
+      return await this.app.vault.adapter.exists(KEY_BLOB_FILENAME);
+    } catch {
+      return this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME) instanceof TFile;
+    }
   }
 
   async readKeyBlob() {

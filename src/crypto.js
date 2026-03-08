@@ -1,6 +1,6 @@
 import { argon2id } from "@noble/hashes/argon2";
 import { randomBytes } from "@noble/hashes/utils";
-import { xchacha20poly1305 } from "@noble/ciphers/chacha";
+import { xchacha20poly1305, chacha20poly1305 } from "@noble/ciphers/chacha";
 import { managedNonce } from "@noble/ciphers/webcrypto";
 
 const ARGON2_MEM         = 64 * 1024;
@@ -11,10 +11,7 @@ const ARGON2_KEY_LEN     = 32;
 const SALT_LEN = 16;
 const KEY_LEN  = 32;
 
-// managedNonce(xchacha20poly1305) automatically prepends a random 24-byte nonce
-// on encrypt and reads it back on decrypt — no manual nonce handling needed.
-// xchacha20poly1305 is preferred over chacha20poly1305 for random nonces
-// because its 192-bit nonce space eliminates nonce-collision risk entirely.
+// v2 cipher: managedNonce(xchacha20poly1305) — correct, used for all new writes
 function makeCipher(key) {
   return managedNonce(xchacha20poly1305)(key);
 }
@@ -48,23 +45,47 @@ export function unlockKeyBlob(password, blobJson) {
     setTimeout(() => {
       try {
         const blob = JSON.parse(blobJson);
-        if (blob.v !== 2) throw new Error("Key blob created with old plugin version — please delete .vault-key and run setup again");
         if (typeof blob.salt !== "string" || blob.salt.length !== SALT_LEN * 2)
           throw new Error("Key blob: invalid salt");
 
         const derivedKey = deriveKey(password, fromHex(blob.salt));
-        resolve(makeCipher(derivedKey).decrypt(fromHex(blob.encryptedKey)));
+
+        if (blob.v === 2) {
+          resolve(makeCipher(derivedKey).decrypt(fromHex(blob.encryptedKey)));
+        } else if (blob.v === 1) {
+          // v1 blob: chacha20poly1305 with manual 12-byte nonce — decrypt best-effort
+          const raw   = fromHex(blob.encryptedKey);
+          const nonce = raw.slice(0, 12);
+          const ct    = raw.slice(12);
+          resolve(chacha20poly1305(derivedKey, nonce).decrypt(ct));
+        } else {
+          throw new Error("Unknown key blob version: " + blob.v);
+        }
       } catch (e) { reject(e); }
     }, 20);
   });
 }
+
+// Notes: v2 format uses managedNonce xchacha20poly1305
+// v1 notes (marker: vault-cipher:v1:) used chacha20poly1305 with manual 12-byte nonce
+// decryptNote handles both so old notes open correctly after upgrade
 
 export function encryptNote(vaultKey, plaintext) {
   return toBase64(makeCipher(vaultKey).encrypt(new TextEncoder().encode(plaintext)));
 }
 
 export function decryptNote(vaultKey, ciphertextB64) {
-  return new TextDecoder().decode(makeCipher(vaultKey).decrypt(fromBase64(ciphertextB64)));
+  const raw = fromBase64(ciphertextB64);
+  // Detect v1 note: 24-byte xchacha nonce means total >= 24+16=40 bytes min.
+  // v1 notes had 12-byte nonce. Heuristic: try v2 first, fall back to v1.
+  try {
+    return new TextDecoder().decode(makeCipher(vaultKey).decrypt(raw));
+  } catch {
+    // Fall back to v1 chacha20poly1305 with 12-byte nonce
+    const nonce = raw.slice(0, 12);
+    const ct    = raw.slice(12);
+    return new TextDecoder().decode(chacha20poly1305(vaultKey, nonce).decrypt(ct));
+  }
 }
 
 function toHex(bytes) {
