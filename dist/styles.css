@@ -1,0 +1,267 @@
+/* ── Vault Cipher ─────────────────────────────────────────────────────────── */
+
+.vault-cipher-modal {
+  padding: 0.5rem 0.25rem;
+}
+
+/* Header */
+.vault-cipher-modal .vault-cipher-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.4rem;
+}
+.vault-cipher-modal .vault-cipher-header .vault-cipher-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.vault-cipher-modal .vault-cipher-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.vault-cipher-modal .vault-cipher-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.1rem 0;
+  line-height: 1.5;
+}
+
+/* How it works */
+.vault-cipher-modal .vault-cipher-how {
+  background: var(--background-secondary);
+  border-radius: var(--radius-m);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.vault-cipher-modal .vault-cipher-how strong {
+  color: var(--text-normal);
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.vault-cipher-modal .vault-cipher-how ol {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+.vault-cipher-modal .vault-cipher-how li {
+  margin-bottom: 0.25rem;
+}
+
+/* Warning box */
+.vault-cipher-modal .vault-cipher-warning {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--color-orange) 12%, var(--background-primary));
+  border: 1px solid color-mix(in srgb, var(--color-orange) 35%, transparent);
+  border-radius: var(--radius-m);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-normal);
+}
+.vault-cipher-modal .vault-cipher-warning .vault-cipher-warning-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+.vault-cipher-modal .vault-cipher-warning-text strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.vault-cipher-modal .vault-cipher-warning-text span {
+  color: var(--text-muted);
+}
+
+/* Fields */
+.vault-cipher-modal .vault-cipher-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+.vault-cipher-modal .vault-cipher-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.vault-cipher-modal .vault-cipher-field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Input wrapper (for show/hide button) */
+.vault-cipher-modal .vault-cipher-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.vault-cipher-modal .vault-cipher-input-wrap input {
+  width: 100%;
+  padding: 0.55rem 2.4rem 0.55rem 0.75rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+.vault-cipher-modal .vault-cipher-input-wrap input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+}
+.vault-cipher-modal .vault-cipher-input-wrap input.is-error {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-red) 15%, transparent);
+}
+
+/* Show/hide password toggle */
+.vault-cipher-modal .vault-cipher-eye {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  color: var(--text-faint);
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.vault-cipher-modal .vault-cipher-eye:hover {
+  color: var(--text-muted);
+}
+
+/* Password strength bar */
+.vault-cipher-modal .vault-cipher-strength {
+  display: flex;
+  gap: 3px;
+  margin-top: 0.2rem;
+}
+.vault-cipher-modal .vault-cipher-strength-bar {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+  transition: background 0.2s ease;
+}
+.vault-cipher-modal .vault-cipher-strength-bar.active-1 { background: var(--color-red); }
+.vault-cipher-modal .vault-cipher-strength-bar.active-2 { background: var(--color-orange); }
+.vault-cipher-modal .vault-cipher-strength-bar.active-3 { background: var(--color-yellow); }
+.vault-cipher-modal .vault-cipher-strength-bar.active-4 { background: var(--color-green); }
+
+/* Inline hint text */
+.vault-cipher-modal .vault-cipher-hint {
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  min-height: 1rem;
+  transition: color 0.15s;
+}
+.vault-cipher-modal .vault-cipher-hint.is-error { color: var(--color-red); }
+.vault-cipher-modal .vault-cipher-hint.is-ok    { color: var(--color-green); }
+.vault-cipher-modal .vault-cipher-hint.is-warn  { color: var(--color-orange); }
+
+/* Textarea (key import) */
+.vault-cipher-modal .vault-cipher-large-textarea {
+  width: 100%;
+  height: 130px;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.vault-cipher-modal .vault-cipher-large-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* Divider */
+.vault-cipher-modal .vault-cipher-divider {
+  border: none;
+  border-top: 1px solid var(--background-modifier-border);
+  margin: 1rem 0;
+}
+
+/* Button row */
+.vault-cipher-modal .vault-cipher-button-row {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.vault-cipher-modal .vault-cipher-button-row button {
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-s);
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, background 0.15s;
+  font-family: inherit;
+}
+.vault-cipher-modal .vault-cipher-button-row button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Cancel */
+.vault-cipher-modal .vault-cipher-button-row .btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--background-modifier-border);
+  margin-right: auto; /* push to left */
+}
+.vault-cipher-modal .vault-cipher-button-row .btn-cancel:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+/* Secondary (e.g. "I already have a key") */
+.vault-cipher-modal .vault-cipher-button-row .btn-secondary {
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--background-modifier-border);
+}
+.vault-cipher-modal .vault-cipher-button-row .btn-secondary:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+/* Primary */
+.vault-cipher-modal .vault-cipher-button-row .btn-primary {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.vault-cipher-modal .vault-cipher-button-row .btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+/* Destructive */
+.vault-cipher-modal .vault-cipher-button-row .btn-primary.mod-warning {
+  background: var(--color-red);
+  color: #fff;
+}
+
+/* Settings tab */
+.vault-cipher-status p { font-size: 1em; padding: 0.5rem 0; }
+.vault-cipher-about {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  line-height: 1.6;
+}
