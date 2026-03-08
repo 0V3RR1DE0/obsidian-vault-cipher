@@ -62,6 +62,12 @@ export default class VaultCipherPlugin extends Plugin {
       callback: () => this.encryptAllNotes(),
     });
 
+    this.addCommand({
+      id: "decrypt-all-notes",
+      name: "Decrypt all notes (keep encryption enabled)",
+      callback: () => this.promptDecryptAll(),
+    });
+
     console.log("Vault Cipher loaded.");
   }
 
@@ -338,6 +344,47 @@ export default class VaultCipherPlugin extends Plugin {
       count++;
     }
     new Notice(`✅ Vault Cipher: encrypted ${count} notes.`);
+  }
+
+  async promptDecryptAll() {
+    if (!this.sessionKey) {
+      new Notice("Unlock the vault first.");
+      return;
+    }
+    const { ConfirmModal } = await import("./modals.js");
+    new ConfirmModal(this.app, {
+      title: "Decrypt all notes?",
+      message: "All encrypted notes will be written back to plaintext on disk. Encryption stays enabled — notes will re-encrypt on next save.",
+      confirmText: "Decrypt all",
+      onConfirm: () => this.decryptAllNotes(),
+    }).open();
+  }
+
+  async decryptAllNotes() {
+    if (!this.sessionKey) {
+      new Notice("Unlock the vault first.");
+      return;
+    }
+    const files = this.app.vault.getMarkdownFiles();
+    let count = 0;
+    for (const file of files) {
+      if (this.isExcluded(file.path)) continue;
+      const content = await this.app.vault.read(file);
+      if (!this.isEncrypted(content)) continue;
+      try {
+        const plaintext = await this.decrypt(content);
+        this._writingFiles.add(file.path);
+        try {
+          await this.app.vault.modify(file, plaintext);
+        } finally {
+          this._writingFiles.delete(file.path);
+        }
+        count++;
+      } catch (e) {
+        console.error("Vault Cipher: failed to decrypt", file.path, e);
+      }
+    }
+    new Notice(`✅ Decrypted ${count} note${count === 1 ? "" : "s"}. Notes will re-encrypt on next save.`);
   }
 
   async disableEncryption() {

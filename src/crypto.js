@@ -1,15 +1,23 @@
 import { argon2id } from "@noble/hashes/argon2";
 import { randomBytes } from "@noble/hashes/utils";
-import { chacha20poly1305 } from "@noble/ciphers/chacha";
+import { xchacha20poly1305 } from "@noble/ciphers/chacha";
+import { managedNonce } from "@noble/ciphers/webcrypto";
 
-const ARGON2_MEM         = 64 * 1024; // 64 MB
+const ARGON2_MEM         = 64 * 1024;
 const ARGON2_TIME        = 3;
 const ARGON2_PARALLELISM = 1;
 const ARGON2_KEY_LEN     = 32;
 
-const SALT_LEN  = 16;
-const NONCE_LEN = 12;
-const KEY_LEN   = 32;
+const SALT_LEN = 16;
+const KEY_LEN  = 32;
+
+// managedNonce(xchacha20poly1305) automatically prepends a random 24-byte nonce
+// on encrypt and reads it back on decrypt — no manual nonce handling needed.
+// xchacha20poly1305 is preferred over chacha20poly1305 for random nonces
+// because its 192-bit nonce space eliminates nonce-collision risk entirely.
+function makeCipher(key) {
+  return managedNonce(xchacha20poly1305)(key);
+}
 
 function deriveKey(password, salt) {
   const pwBytes = new TextEncoder().encode(password);
@@ -22,30 +30,14 @@ export function generateVaultKey() {
   return randomBytes(KEY_LEN);
 }
 
-function encryptBytes(key, data) {
-  const nonce      = randomBytes(NONCE_LEN);
-  const ciphertext = chacha20poly1305(key, nonce).encrypt(data);
-  const out        = new Uint8Array(NONCE_LEN + ciphertext.length);
-  out.set(nonce, 0);
-  out.set(ciphertext, NONCE_LEN);
-  return out;
-}
-
-function decryptBytes(key, blob) {
-  const nonce      = blob.slice(0, NONCE_LEN);
-  const ciphertext = blob.slice(NONCE_LEN);
-  return chacha20poly1305(key, nonce).decrypt(ciphertext);
-}
-
-// Wrapped in Promise+setTimeout so the UI spinner renders before the thread blocks
 export function createKeyBlob(password, vaultKey) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       try {
         const salt       = randomBytes(SALT_LEN);
         const derivedKey = deriveKey(password, salt);
-        const encrypted  = encryptBytes(derivedKey, vaultKey);
-        resolve(JSON.stringify({ v: 1, salt: toHex(salt), encryptedKey: toHex(encrypted) }));
+        const encrypted  = makeCipher(derivedKey).encrypt(vaultKey);
+        resolve(JSON.stringify({ v: 2, salt: toHex(salt), encryptedKey: toHex(encrypted) }));
       } catch (e) { reject(e); }
     }, 20);
   });
@@ -56,25 +48,23 @@ export function unlockKeyBlob(password, blobJson) {
     setTimeout(() => {
       try {
         const blob = JSON.parse(blobJson);
-        if (blob.v !== 1) throw new Error("Unsupported key blob version");
+        if (blob.v !== 2) throw new Error("Key blob created with old plugin version — please delete .vault-key and run setup again");
         if (typeof blob.salt !== "string" || blob.salt.length !== SALT_LEN * 2)
           throw new Error("Key blob: invalid salt");
-        if (typeof blob.encryptedKey !== "string" || blob.encryptedKey.length < NONCE_LEN * 2)
-          throw new Error("Key blob: invalid encryptedKey");
 
         const derivedKey = deriveKey(password, fromHex(blob.salt));
-        resolve(decryptBytes(derivedKey, fromHex(blob.encryptedKey)));
+        resolve(makeCipher(derivedKey).decrypt(fromHex(blob.encryptedKey)));
       } catch (e) { reject(e); }
     }, 20);
   });
 }
 
 export function encryptNote(vaultKey, plaintext) {
-  return toBase64(encryptBytes(vaultKey, new TextEncoder().encode(plaintext)));
+  return toBase64(makeCipher(vaultKey).encrypt(new TextEncoder().encode(plaintext)));
 }
 
 export function decryptNote(vaultKey, ciphertextB64) {
-  return new TextDecoder().decode(decryptBytes(vaultKey, fromBase64(ciphertextB64)));
+  return new TextDecoder().decode(makeCipher(vaultKey).decrypt(fromBase64(ciphertextB64)));
 }
 
 function toHex(bytes) {
