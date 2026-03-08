@@ -6,7 +6,7 @@
 
 import { Plugin, TFile, Notice } from "obsidian";
 import { generateVaultKey, createKeyBlob, unlockKeyBlob, encryptNote, decryptNote } from "./crypto.js";
-import { UnlockModal, SetupModal, ChangePasswordModal, ImportKeyModal, ConfirmModal } from "./modals.js";
+import { UnlockModal, SetupModal, ChangePasswordModal, ImportKeyModal } from "./modals.js";
 import { VaultCipherSettingsTab, DEFAULT_SETTINGS } from "./settings.js";
 
 const KEY_BLOB_FILENAME = ".vault-key";
@@ -135,9 +135,41 @@ export default class VaultCipherPlugin extends Plugin {
     try {
       const blobJson = await this.readKeyBlob();
       this.sessionKey = await unlockKeyBlob(password, blobJson);
+      // Decrypt all currently open editors now that we have the key
+      await this.refreshAllOpenEditors();
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  // Walk every open leaf and push decrypted content into the editor.
+  // This makes unlock instant — no need to close and reopen files.
+  async refreshAllOpenEditors() {
+    const leaves = this.app.workspace.getLeavesOfType("markdown");
+    for (const leaf of leaves) {
+      const file = leaf.view?.file;
+      if (!file || file.extension !== "md" || this.isExcluded(file.path)) continue;
+
+      try {
+        const raw = await this.app.vault.read(file);
+        if (!this.isEncrypted(raw)) continue;
+
+        const plaintext = await this.decrypt(raw);
+        const editor = leaf.view?.editor;
+        if (!editor) continue;
+
+        this._writingFiles.add(file.path);
+        try {
+          editor.setValue(plaintext);
+          // Move cursor to top so user isn't left mid-ciphertext
+          editor.setCursor({ line: 0, ch: 0 });
+        } finally {
+          this._writingFiles.delete(file.path);
+        }
+      } catch (e) {
+        console.error("Vault Cipher: failed to refresh editor for", file.path, e);
+      }
     }
   }
 
@@ -186,33 +218,29 @@ export default class VaultCipherPlugin extends Plugin {
   }
 
   async readKeyBlob() {
-    // Use adapter.read directly — vault file index may not be ready at startup,
-    // causing getAbstractFileByPath to return null even when the file exists.
-    try {
-      return await this.app.vault.adapter.read(KEY_BLOB_FILENAME);
-    } catch (e) {
-      // Fallback: try vault index (handles edge cases like custom adapters)
-      const file = this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME);
-      if (!file) throw new Error("Key blob not found — is the vault set up?");
-      return await this.app.vault.read(file);
-    }
+    const file = this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME);
+    if (!file) throw new Error("Key blob not found");
+    return await this.app.vault.read(file);
   }
 
   async writeKeyBlob(content) {
-    // Always use adapter directly — bypasses vault modify patch (prevents double-encryption)
-    // and works regardless of whether the vault file index is ready.
-    const adapter = this.app.vault.adapter;
+    // Prefer to use the original modify/create functions to avoid double-encryption.
+    const existing = this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME);
     try {
-      await adapter.write(KEY_BLOB_FILENAME, content);
+      if (existing instanceof TFile) {
+        const writeFn = this._originalModify || this.app.vault.modify.bind(this.app.vault);
+        await writeFn(existing, content);
+      } else {
+        await this.app.vault.create(KEY_BLOB_FILENAME, content);
+      }
     } catch (e) {
-      // Fallback: use vault API (custom adapters that don't expose write())
-      const existing = this.app.vault.getAbstractFileByPath(KEY_BLOB_FILENAME);
+      // Fallback to adapter write if available (attempt atomic write)
       try {
-        if (existing instanceof TFile) {
-          const writeFn = this._originalModify || this.app.vault.modify.bind(this.app.vault);
-          await writeFn(existing, content);
+        const adapter = this.app.vault.adapter;
+        if (adapter && adapter.write) {
+          await adapter.write(KEY_BLOB_FILENAME, content);
         } else {
-          await this.app.vault.create(KEY_BLOB_FILENAME, content);
+          throw e;
         }
       } catch (err) {
         console.error("Failed to write key blob:", err);
@@ -360,6 +388,7 @@ export default class VaultCipherPlugin extends Plugin {
       new Notice("Unlock the vault first.");
       return;
     }
+    const { ConfirmModal } = await import("./modals.js");
     new ConfirmModal(this.app, {
       title: "Decrypt all notes?",
       message: "All encrypted notes will be written back to plaintext on disk. Encryption stays enabled — notes will re-encrypt on next save.",
