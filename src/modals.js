@@ -28,6 +28,12 @@ function makePasswordField(parent, placeholder, autocomplete = "current-password
     eye.textContent = isHidden ? "🙈" : "👁";
   });
 
+  // On mobile, the on-screen keyboard covers the input when it appears.
+  // scrollIntoView tells the browser to bring the focused field into view.
+  input.addEventListener("focus", () => {
+    setTimeout(() => input.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+  });
+
   return { wrap, input };
 }
 
@@ -117,17 +123,30 @@ export class SetupModal extends Modal {
       cls: "vault-cipher-subtitle",
     });
 
-    // How it works
-    const how = contentEl.createDiv({ cls: "vault-cipher-how" });
-    how.createEl("strong", { text: "How it works" });
-    const steps = how.createEl("ol");
+    // How it works — collapsible so mobile users aren't buried before reaching the password field
+    const howWrap = contentEl.createDiv({ cls: "vault-cipher-how" });
+    const howToggle = howWrap.createEl("button", { cls: "vault-cipher-how-toggle" });
+    howToggle.type = "button";
+    const howBody = howWrap.createDiv({ cls: "vault-cipher-how-body" });
+
+    // Collapsed by default on mobile (body has is-mobile class), expanded on desktop
+    const isMobile = document.body.classList.contains("is-mobile");
+    let howOpen = !isMobile;
+    const updateHow = () => {
+      howToggle.textContent = (howOpen ? "▾ " : "▸ ") + "How it works";
+      howBody.style.display = howOpen ? "" : "none";
+    };
+    howToggle.addEventListener("click", () => { howOpen = !howOpen; updateHow(); });
+
+    const steps = howBody.createEl("ol");
     [
       "A random 256-bit vault key is generated for this vault.",
       "Your password is hashed with Argon2id (64 MB, 3 iterations) producing a wrapping key.",
-      "The wrapping key encrypts the vault key with ChaCha20-Poly1305 — stored as .vault-key.",
+      "The wrapping key encrypts the vault key with XChaCha20-Poly1305 — stored as .vault-key.",
       "Every note is encrypted with the vault key + a unique random nonce on each save.",
       "On unlock, your password unwraps the vault key into memory. Notes decrypt transparently.",
     ].forEach(s => steps.createEl("li", { text: s }));
+    updateHow();
 
     // Warning
     const warning = contentEl.createDiv({ cls: "vault-cipher-warning" });
@@ -461,11 +480,7 @@ export class ImportKeyModal extends Modal {
     const importBtn = buttonRow.createEl("button", { text: "Import", cls: "btn-primary mod-warning" });
     importBtn.addEventListener("click", async () => {
       if (!this.text) { new Notice("Paste the .vault-key JSON first."); return; }
-      let parsed;
-      try { parsed = JSON.parse(this.text); } catch { new Notice("Invalid JSON — paste the full .vault-key contents."); return; }
-      if (parsed.v !== 4)  { new Notice(`❌ Key blob version ${parsed.v ?? "unknown"} is not supported by this plugin version.`); return; }
-      if (!parsed.salt)    { new Notice("❌ Key blob is missing the salt field."); return; }
-      if (!parsed.encryptedKey) { new Notice("❌ Key blob is missing the encryptedKey field."); return; }
+      try { JSON.parse(this.text); } catch { new Notice("Invalid JSON."); return; }
 
       this.close();
       new ConfirmModal(this.app, {

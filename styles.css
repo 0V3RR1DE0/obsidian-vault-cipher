@@ -265,3 +265,63 @@
   font-size: 0.9em;
   line-height: 1.6;
 }
+/* ── Mobile improvements ──────────────────────────────────────────────────── */
+
+/* Collapsible "how it works" toggle button */
+.vault-cipher-modal .vault-cipher-how-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-normal);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0;
+  margin-bottom: 0.35rem;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.vault-cipher-modal .vault-cipher-how-toggle:hover {
+  color: var(--interactive-accent);
+}
+.vault-cipher-modal .vault-cipher-how-body ol {
+  margin: 0.35rem 0 0 0;
+  padding-left: 1.2rem;
+}
+
+/* On mobile: make modal content scrollable so keyboard doesn't trap the user */
+.is-mobile .vault-cipher-modal {
+  padding: 0.5rem 0.1rem;
+}
+.is-mobile .modal-content {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Bigger tap targets on mobile for eye toggle and buttons */
+.is-mobile .vault-cipher-modal .vault-cipher-eye {
+  padding: 0.5rem;
+  right: 0.25rem;
+  font-size: 1.15rem;
+}
+.is-mobile .vault-cipher-modal .vault-cipher-input-wrap input {
+  padding: 0.7rem 2.8rem 0.7rem 0.75rem;
+  font-size: 1rem;
+}
+.is-mobile .vault-cipher-modal .vault-cipher-button-row button {
+  padding: 0.65rem 1.1rem;
+  font-size: 0.95rem;
+  min-height: 2.5rem;
+}
+
+/* Stack buttons vertically on very narrow screens */
+@media (max-width: 400px) {
+  .vault-cipher-modal .vault-cipher-button-row {
+    flex-direction: column-reverse;
+  }
+  .vault-cipher-modal .vault-cipher-button-row .btn-cancel {
+    margin-right: 0;
+  }
+}

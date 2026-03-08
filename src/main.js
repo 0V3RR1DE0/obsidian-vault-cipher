@@ -4,7 +4,7 @@
  * Updated to use async crypto helpers and to provide password-change/export/import UX.
  */
 
-import { Plugin, TFile, Notice } from "obsidian";
+import { Plugin, TFile, Notice, setIcon } from "obsidian";
 import { generateVaultKey, createKeyBlob, unlockKeyBlob, encryptNote, decryptNote } from "./crypto.js";
 import { UnlockModal, SetupModal, ChangePasswordModal, ImportKeyModal, ConfirmModal } from "./modals.js";
 import { VaultCipherSettingsTab, DEFAULT_SETTINGS } from "./settings.js";
@@ -40,6 +40,17 @@ export default class VaultCipherPlugin extends Plugin {
     }));
 
     this.patchVaultModify();
+
+    // Ribbon icon — shows current lock state, click to toggle
+    this._ribbonIcon = this.addRibbonIcon("lock", "Vault Cipher: locked", () => {
+      if (this.sessionKey) {
+        this.lockVault();
+        new Notice("🔒 Vault locked.");
+      } else {
+        this.promptUnlock();
+      }
+    });
+    this.updateRibbonIcon();
 
     this.addCommand({
       id: "lock-vault",
@@ -86,6 +97,36 @@ export default class VaultCipherPlugin extends Plugin {
     if (this.sessionKey) this.sessionKey.fill(0);
     this.sessionKey = null;
     this.clearAutoLockTimer();
+    // Push encrypted ciphertext back into any open editors so nothing is readable
+    this.lockAllOpenEditors();
+    // Update ribbon icon to locked state
+    this.updateRibbonIcon();
+  }
+
+  // Replace plaintext in every open editor with the encrypted content from disk.
+  lockAllOpenEditors() {
+    const leaves = this.app.workspace.getLeavesOfType("markdown");
+    for (const leaf of leaves) {
+      const file = leaf.view?.file;
+      if (!file || file.extension !== "md" || this.isExcluded(file.path)) continue;
+      const editor = leaf.view?.editor;
+      if (!editor) continue;
+
+      // Read the raw (encrypted) content from disk and show it directly.
+      // We do this async but don't await — best-effort, fire and forget per leaf.
+      this.app.vault.read(file).then(raw => {
+        if (!this.isEncrypted(raw)) return; // not encrypted, nothing to replace
+        this._writingFiles.add(file.path);
+        try {
+          editor.setValue(raw);
+          editor.setCursor({ line: 0, ch: 0 });
+        } finally {
+          this._writingFiles.delete(file.path);
+        }
+      }).catch(e => {
+        console.error("Vault Cipher: failed to lock editor for", file.path, e);
+      });
+    }
   }
 
   resetAutoLockTimer() {
@@ -100,6 +141,19 @@ export default class VaultCipherPlugin extends Plugin {
     if (this._autoLockTimer) {
       clearTimeout(this._autoLockTimer);
       this._autoLockTimer = null;
+    }
+  }
+
+  // Update the ribbon icon and tooltip to reflect current lock state.
+  updateRibbonIcon() {
+    if (!this._ribbonIcon) return;
+    if (this.sessionKey) {
+      this._ribbonIcon.setAttribute("aria-label", "Vault Cipher: unlocked — click to lock");
+      // Swap the SVG icon: use unlock icon when open
+      setIcon(this._ribbonIcon, "unlock");
+    } else {
+      setIcon(this._ribbonIcon, "lock");
+      this._ribbonIcon.setAttribute("aria-label", "Vault Cipher: locked — click to unlock");
     }
   }
 
@@ -135,8 +189,8 @@ export default class VaultCipherPlugin extends Plugin {
     try {
       const blobJson = await this.readKeyBlob();
       this.sessionKey = await unlockKeyBlob(password, blobJson);
-      // Decrypt all currently open editors now that we have the key
       await this.refreshAllOpenEditors();
+      this.updateRibbonIcon();
       return true;
     } catch (e) {
       return false;

@@ -33,17 +33,30 @@ export class VaultCipherSettingsTab extends PluginSettingTab {
         : "⚠️ Encryption is not enabled for this vault.",
     });
 
-    if (isEnabled && isUnlocked) {
-      new Setting(containerEl)
-        .setName("Lock vault")
-        .setDesc("Clear the session key from memory.")
-        .addButton((btn) => {
-          btn.setButtonText("Lock now").onClick(() => {
-            this.plugin.lockVault();
-            new Notice("Vault locked.");
-            this.display();
+    if (isEnabled) {
+      if (isUnlocked) {
+        new Setting(containerEl)
+          .setName("Lock vault")
+          .setDesc("Clear the session key from memory. Open notes will show ciphertext.")
+          .addButton((btn) => {
+            btn.setButtonText("🔒 Lock now").onClick(() => {
+              this.plugin.lockVault();
+              new Notice("🔒 Vault locked.");
+              this.display();
+            });
           });
-        });
+      } else {
+        new Setting(containerEl)
+          .setName("Unlock vault")
+          .setDesc("Enter your password to decrypt notes for this session.")
+          .addButton((btn) => {
+            btn.setButtonText("🔓 Unlock").setCta().onClick(() => {
+              this.plugin.promptUnlock();
+              // Re-render after a short delay to reflect unlocked state
+              setTimeout(() => this.display(), 3000);
+            });
+          });
+      }
     }
 
     new Setting(containerEl)
